@@ -14,8 +14,18 @@
  * llamadas y así el bundle no crece ni hay una dependencia más que mantener.
  */
 
-const URL_BASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+/**
+ * Supabase muestra la URL de la API como `https://xxx.supabase.co/rest/v1/`,
+ * y es muy fácil pegarla tal cual. Aquí se normaliza a la raíz del proyecto
+ * para que ambas formas funcionen y nadie pierda una hora por una barra.
+ */
+function normalizeBase(raw?: string) {
+  if (!raw) return undefined;
+  return raw.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/, '');
+}
+
+const URL_BASE = normalizeBase(import.meta.env.VITE_SUPABASE_URL as string | undefined);
+const ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim();
 
 export const isCloudEnabled = () => Boolean(URL_BASE && ANON_KEY);
 

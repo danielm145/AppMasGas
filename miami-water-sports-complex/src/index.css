@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-deep-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  ::selection {
+    @apply bg-lagoon-200 text-deep-950;
+  }
+
+  /* Scrollbars discretas — la app tiene muchas tablas con scroll interno */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.slate.300') transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full border-[3px] border-solid border-transparent bg-slate-300 bg-clip-content;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400 bg-clip-content;
+  }
+}
+
+@layer components {
+  .focus-ring {
+    @apply outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-lagoon-500;
+  }
+
+  /* Fondo con textura de agua para las pantallas de acceso y encabezados */
+  .wave-bg {
+    background-image:
+      radial-gradient(900px 400px at 15% -10%, rgba(34, 211, 238, 0.28), transparent 60%),
+      radial-gradient(700px 380px at 95% 0%, rgba(249, 115, 22, 0.18), transparent 55%),
+      linear-gradient(160deg, #071523 0%, #0d1f33 45%, #164e63 100%);
+  }
+}

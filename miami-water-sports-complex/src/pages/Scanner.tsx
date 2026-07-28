@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { Camera, CheckCircle2, HardHat, Monitor, RectangleHorizontal, ScanLine, Smartphone, XCircle, Zap } from 'lucide-react';
 import { QrScanner } from '@/components/QrScanner';
 import { QrCode } from '@/components/QrCode';
+import { PersonAvatar } from '@/components/CustomerQuickView';
 import { useStore } from '@/lib/store';
 import { ASSET_CATEGORY_LABELS, LINE_LABELS } from '@/lib/types';
 import { cn, formatTime, relativeTime } from '@/lib/utils';
-import { Avatar, Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader } from '@/components/ui';
+import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader } from '@/components/ui';
 
 /**
  * Estación de registro de vueltas.
@@ -169,7 +170,7 @@ export default function Scanner() {
                 return (
                   <li key={s.id}>
                     <button onClick={() => submit(helmet?.code ?? s.wristbandCode)} className="flex w-full items-center gap-3 px-5 py-3 text-left transition hover:bg-lagoon-50/50">
-                      <Avatar name={c ? `${c.firstName} ${c.lastName}` : 'Rider'} size="sm" />
+                      <PersonAvatar customerId={s.customerId} name={c ? `${c.firstName} ${c.lastName}` : 'Rider'} src={c?.photoUrl} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-semibold text-deep-900">
                           {c?.firstName} {c?.lastName}

@@ -19,6 +19,7 @@ import { cn, relativeTime } from '@/lib/utils';
 import { Avatar, Badge } from './ui';
 import { CommandPalette } from './CommandPalette';
 import { GuidedTour, TOUR_EVENT, TourButton } from './GuidedTour';
+import { CustomerQuickView } from './CustomerQuickView';
 
 export function AppShell() {
   const { state, currentUser, role, setCurrentUser, setSimpleMode, markAllNotificationsRead, markNotificationRead, resetDemo } = useStore();
@@ -325,6 +326,7 @@ export function AppShell() {
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CustomerQuickView />
       <TourButton onClick={() => setTourOpen(true)} hidden={tourOpen} />
       <GuidedTour open={tourOpen} onOpenChange={setTourOpen} />
       <Toasts />

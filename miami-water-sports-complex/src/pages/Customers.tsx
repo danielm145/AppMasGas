@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Filter, Mail, Phone, UserPlus, Users } from 'lucide-react';
+import { PersonAvatar } from '@/components/CustomerQuickView';
 import { useStore } from '@/lib/store';
 import { segments as segmentDefs } from '@/data/seed';
 import { TIER_META, type LoyaltyTier, type SkillLevel } from '@/lib/types';
 import { age, cn, downloadCsv, formatDate, money, num, relativeTime } from '@/lib/utils';
-import {
-  Avatar,
-  Badge,
+import { Badge,
   Button,
   Card,
   EmptyState,
@@ -152,7 +151,7 @@ export default function Customers() {
                 <Tr key={c.id}>
                   <Td>
                     <Link to={`/customers/${c.id}`} className="flex items-center gap-3 group">
-                      <Avatar name={`${c.firstName} ${c.lastName}`} size="sm" />
+                      <PersonAvatar customerId={c.id} name={`${c.firstName} ${c.lastName}`} src={c.photoUrl} size="sm" />
                       <span className="min-w-0">
                         <span className="block truncate font-semibold text-deep-900 group-hover:text-lagoon-700">
                           {c.firstName} {c.lastName}

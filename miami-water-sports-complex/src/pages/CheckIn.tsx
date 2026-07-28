@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, ArrowRight, Camera, Check, FileSignature, ShieldCheck, UserPlus, X } from 'lucide-react';
 import { QrTag } from '@/components/QrCode';
 import { QrScanner } from '@/components/QrScanner';
+import { readImageFile } from '@/lib/images';
 import { SignaturePad } from '@/components/SignaturePad';
+import { PersonAvatar } from '@/components/CustomerQuickView';
 import { useStore } from '@/lib/store';
 import {
   ASSET_CATEGORY_LABELS,
@@ -15,9 +17,7 @@ import {
   type PackageType,
 } from '@/lib/types';
 import { age, cn, formatDate, money } from '@/lib/utils';
-import {
-  Avatar,
-  Badge,
+import { Badge,
   Button,
   Card,
   CardHeader,
@@ -59,6 +59,7 @@ export default function CheckIn() {
   const [gear, setGear] = useState<string[]>([]);
   const [wristband, setWristband] = useState<string>();
   const [gearScanner, setGearScanner] = useState(false);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const [draft, setDraft] = useState({
     firstName: '',
@@ -75,6 +76,7 @@ export default function CheckIn() {
     guardianPhone: '',
     canSwim: false,
     idVerified: false,
+    photoUrl: undefined as string | undefined,
     marketingOptIn: true,
     smsOptIn: true,
   });
@@ -174,6 +176,7 @@ export default function CheckIn() {
       isMinor: minor,
       guardianName: minor ? draft.guardianName : undefined,
       guardianPhone: minor ? draft.guardianPhone : undefined,
+      photoUrl: draft.photoUrl,
       canSwim: draft.canSwim ? 'declared' : 'pending',
       idVerified: draft.idVerified,
       marketingOptIn: draft.marketingOptIn,
@@ -290,7 +293,7 @@ export default function CheckIn() {
                           }}
                           className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-lagoon-50/50"
                         >
-                          <Avatar name={`${c.firstName} ${c.lastName}`} size="md" />
+                          <PersonAvatar customerId={c.id} name={`${c.firstName} ${c.lastName}`} src={c.photoUrl} size="md" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-bold text-deep-900">
                               {c.firstName} {c.lastName}
@@ -319,6 +322,41 @@ export default function CheckIn() {
               </>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center gap-4 sm:col-span-2">
+                  <button
+                    onClick={() => photoRef.current?.click()}
+                    className="focus-ring relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 transition hover:border-lagoon-400"
+                    aria-label="Take the customer's photo"
+                  >
+                    {draft.photoUrl ? (
+                      <img src={draft.photoUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full flex-col items-center justify-center gap-1 text-slate-400">
+                        <Camera className="h-7 w-7" />
+                        <span className="text-[10px] font-bold">Photo</span>
+                      </span>
+                    )}
+                  </button>
+                  <input
+                    ref={photoRef}
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    className="sr-only"
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (f) {
+                        const dataUrl = await readImageFile(f);
+                        setDraft((d) => ({ ...d, photoUrl: dataUrl }));
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                  <p className="text-sm text-slate-500">
+                    Take their photo. Staff will recognize them on the dock and on their next visit, and it shows up on every screen where their name appears.
+                  </p>
+                </div>
+
                 <Field label="First name" required>
                   <Input value={draft.firstName} onChange={(e) => setDraft({ ...draft, firstName: e.target.value })} placeholder="María" />
                 </Field>

@@ -106,7 +106,7 @@ export const employees: Employee[] = EMPLOYEE_SEED.map(([firstName, lastName, ro
       expiresAt: isoDate(addDays(issued, 730)),
     };
   }),
-  emergencyContact: { name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Cónyuge', 'Madre', 'Padre', 'Hermano/a']), phone: phone() },
+  emergencyContact: { name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Spouse', 'Mother', 'Father', 'Sibling']), phone: phone() },
   weeklyHourTarget: role === 'owner' ? 45 : between(rng, 20, 40),
 }));
 
@@ -114,7 +114,7 @@ const operatorIds = employees.filter((e) => ['operator', 'supervisor', 'instruct
 
 /* ─────────────────────────────── Clientes ──────────────────────────────── */
 
-const TAGS = ['local', 'frecuente', 'cumpleaños', 'grupo corporativo', 'referido', 'escuela', 'turista', 'competidor'];
+const TAGS = ['local', 'frequent', 'birthday', 'corporate group', 'referral', 'school', 'tourist', 'competitor'];
 
 export const customers: Customer[] = Array.from({ length: 64 }, (_, i) => {
   const { firstName, lastName } = name();
@@ -137,7 +137,7 @@ export const customers: Customer[] = Array.from({ length: 64 }, (_, i) => {
     zip: String(between(rng, 33010, 33199)),
     createdAt: created.toISOString(),
     skillLevel: pick(rng, ['beginner', 'beginner', 'intermediate', 'intermediate', 'advanced', 'pro'] as const),
-    emergencyContact: { name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Madre', 'Padre', 'Cónyuge', 'Amigo/a']), phone: phone() },
+    emergencyContact: { name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Mother', 'Father', 'Spouse', 'Friend']), phone: phone() },
     isMinor: minor,
     guardianName: minor ? `${pick(rng, FIRST)} ${lastName}` : undefined,
     guardianPhone: minor ? phone() : undefined,
@@ -220,7 +220,7 @@ export const assets: Asset[] = ASSET_BLUEPRINT.flatMap(([category, brand, prefix
       photoUrl: assetPhoto(code, category),
       purchaseDate: isoDate(purchase),
       purchasePrice: Math.round(price * (0.9 + rng() * 0.25)),
-      vendor: pick(rng, ['Wakeboard Warehouse', 'Buywake', 'Distribuidor local FL', 'Compra directa fábrica']),
+      vendor: pick(rng, ['Wakeboard Warehouse', 'Buywake', 'Local FL distributor', 'Direct from manufacturer']),
       condition: status === 'retired' ? 'retired' : pick(rng, ['new', 'good', 'good', 'good', 'fair', 'poor'] as const),
       status,
       location: pick(rng, LOCATIONS),
@@ -236,12 +236,12 @@ export const assets: Asset[] = ASSET_BLUEPRINT.flatMap(([category, brand, prefix
 );
 
 const EVENT_TEMPLATES: Array<[AssetEvent['type'], string[], [number, number]]> = [
-  ['inspection', ['Inspección visual semanal — sin novedad', 'Revisión de fijaciones y tornillería', 'Chequeo de hebillas y costuras'], [0, 0]],
-  ['damage', ['Delaminación en el canto derecho', 'Fisura en la aleta trasera', 'Correa de fijación rota', 'Golpe contra el rail — raspón profundo'], [0, 0]],
-  ['maintenance', ['Cambio de fijaciones', 'Resane de fibra y sellado', 'Lubricación y ajuste de herrajes', 'Cambio de aleta y tornillos'], [25, 180]],
-  ['assignment', ['Asignado a sesión de cable', 'Entregado en recepción para clase'], [0, 0]],
-  ['return', ['Devuelto en buen estado', 'Devuelto — se reporta desgaste normal'], [0, 0]],
-  ['transfer', ['Trasladado a bodega principal', 'Movido al muelle norte para temporada alta'], [0, 0]],
+  ['inspection', ['Weekly visual inspection — nothing to report', 'Bindings and hardware checked', 'Buckles and stitching checked'], [0, 0]],
+  ['damage', ['Delamination on the right edge', 'Crack in the rear fin', 'Broken binding strap', 'Hit the rail — deep gouge'], [0, 0]],
+  ['maintenance', ['Bindings replaced', 'Fiberglass patched and sealed', 'Hardware lubricated and adjusted', 'Fin and screws replaced'], [25, 180]],
+  ['assignment', ['Checked out for a cable session', 'Handed out at the desk for a lesson'], [0, 0]],
+  ['return', ['Returned in good condition', 'Returned — normal wear noted'], [0, 0]],
+  ['transfer', ['Moved to main storage', 'Moved to the cable dock for high season'], [0, 0]],
 ];
 
 export const assetEvents: AssetEvent[] = assets.flatMap((a) => {
@@ -251,7 +251,7 @@ export const assetEvents: AssetEvent[] = assets.flatMap((a) => {
       assetId: a.id,
       type: 'purchase',
       date: a.purchaseDate,
-      description: `Compra a ${a.vendor}. Ingreso al inventario como ${a.code}.`,
+      description: `Purchased from ${a.vendor}. Added to inventory as ${a.code}.`,
       cost: a.purchasePrice,
       performedBy: 'emp_2',
       hoursAtEvent: 0,
@@ -407,7 +407,7 @@ rideSessions
         assetId,
         type: 'assignment',
         date: isoDate(NOW),
-        description: `Entregado a ${customer ? `${customer.firstName} ${customer.lastName}` : 'cliente'} · sesión ${s.wristbandCode}`,
+        description: `Checked out to ${customer ? `${customer.firstName} ${customer.lastName}` : 'customer'} · session ${s.wristbandCode}`,
         performedBy: s.operatorId,
       });
     });
@@ -434,7 +434,7 @@ export const reservations: Reservation[] = Array.from({ length: 34 }, (_, i) => 
 
 /* ───────────────────────────── Turnos / horarios ────────────────────────── */
 
-const POSITIONS = ['Operador cable', 'Recepción', 'Salvavidas', 'Instructor', 'Aqua Park', 'Pro Shop', 'Mantenimiento'];
+const POSITIONS = ['Cable operator', 'Front desk', 'Lifeguard', 'Instructor', 'Aqua park', 'Pro Shop', 'Maintenance'];
 
 export const shifts: Shift[] = (() => {
   const out: Shift[] = [];
@@ -466,18 +466,18 @@ export const shifts: Shift[] = (() => {
 /* ───────────────────────── Mantenimiento y suministros ──────────────────── */
 
 const TICKET_SEED: Array<[string, string, string, MaintenanceTicket['priority'], MaintenanceTicket['status']]> = [
-  ['Cable principal hace ruido en torre 3', 'Se escucha un chirrido metálico intermitente al pasar el carro por la torre 3. Se sospecha rodamiento.', 'Cable park', 'critical', 'in-progress'],
-  ['Motor del System 2.0 se sobrecalienta', 'Después de 3 h continuas el motor llega a temperatura de alarma y corta.', 'Cable park', 'high', 'waiting-parts'],
-  ['Rail de 30ft con tornillería suelta', 'Dos pernos del anclaje central están flojos. Riesgo de desplazamiento.', 'Obstáculos', 'high', 'open'],
-  ['Nautique boat — fuel filter service', 'Mantenimiento programado de 100 h: cambio de filtro y bujías.', 'Muelle sur', 'medium', 'open'],
-  ['Fuga en tubería de la ducha exterior', 'Goteo constante en la ducha 2 del área de vestidores.', 'Instalaciones', 'low', 'open'],
-  ['Inflable Wibit módulo 4 pierde aire', 'Pierde presión en ~6 h. Posible pinchazo en la costura inferior.', 'Aqua Park', 'medium', 'in-progress'],
-  ['Cambio de cuerdas y manijas', 'Rotación trimestral de líneas de tracción del cable completo.', 'Cable park', 'medium', 'resolved'],
-  ['Luminaria del estacionamiento fundida', 'Poste 6 sin luz — afecta salida nocturna de clientes.', 'Estacionamiento', 'low', 'resolved'],
-  ['Compresor del pro shop no enciende', 'No arranca. Se usa para inflar chalecos y limpiar equipo.', 'Pro Shop', 'medium', 'closed'],
-  ['Baranda del muelle norte oxidada', 'Corrosión avanzada en 2 m de baranda. Lijar y repintar.', 'Muelle norte', 'medium', 'open'],
-  ['Radio Motorola #3 sin batería', 'La batería ya no retiene carga, dura menos de 1 h.', 'Operaciones', 'low', 'open'],
-  ['Torre 5 — revisión de tensores', 'Inspección trimestral de tensores y poleas de la torre 5.', 'Cable park', 'high', 'in-progress'],
+  ['Main cable noisy at tower 3', 'Intermittent metallic squeal as the carrier passes tower 3. Bearing suspected.', 'Cable park', 'critical', 'in-progress'],
+  ['System 2.0 motor overheating', 'After 3 continuous hours the motor hits alarm temperature and cuts out.', 'Cable park', 'high', 'waiting-parts'],
+  ['30ft rail has loose hardware', 'Two bolts on the center anchor are loose. Risk of the rail shifting.', 'Obstacles', 'high', 'open'],
+  ['Nautique boat — fuel filter service', 'Scheduled 100-hour service: filter and spark plugs.', 'Boat dock', 'medium', 'open'],
+  ['Leak in the outdoor shower line', 'Constant drip at shower 2 in the changing area.', 'Facilities', 'low', 'open'],
+  ['Wibit module 4 losing air', 'Loses pressure over ~6 hours. Possible puncture on the bottom seam.', 'Aqua park', 'medium', 'in-progress'],
+  ['Ropes and handles replaced', 'Quarterly rotation of the full cable tow lines.', 'Cable park', 'medium', 'resolved'],
+  ['Parking lot light out', 'Pole 6 is dark — affects customers leaving after sunset.', 'Parking lot', 'low', 'resolved'],
+  ['Pro shop compressor will not start', 'No response. Used to inflate vests and blow out gear.', 'Pro Shop', 'medium', 'closed'],
+  ['Cable dock railing rusted', 'Advanced corrosion along 2 m of railing. Sand and repaint.', 'Cable dock', 'medium', 'open'],
+  ['Motorola radio #3 will not hold charge', 'Battery no longer holds a charge — lasts under an hour.', 'Operations', 'low', 'open'],
+  ['Tower 5 — tensioner check', 'Quarterly inspection of tower 5 tensioners and pulleys.', 'Cable park', 'high', 'in-progress'],
 ];
 
 export const tickets: MaintenanceTicket[] = TICKET_SEED.map(([title, description, area, priority, status], i) => {
@@ -497,7 +497,7 @@ export const tickets: MaintenanceTicket[] = TICKET_SEED.map(([title, description
     createdAt: created.toISOString(),
     dueAt: addDays(created, priority === 'critical' ? 1 : priority === 'high' ? 3 : 10).toISOString(),
     resolvedAt: resolved?.toISOString(),
-    resolution: resolved ? 'Se ejecutó el trabajo y se validó en operación. Sin novedades.' : undefined,
+    resolution: resolved ? 'Work completed and validated in operation. Nothing further to report.' : undefined,
     laborHours: resolved ? between(rng, 1, 8) : undefined,
     cost: resolved ? between(rng, 40, 900) : undefined,
     blocksAsset: priority === 'critical' || priority === 'high',
@@ -517,62 +517,62 @@ export const parkPolicies = {
 export const preventivePlans: PreventivePlan[] = [
   {
     id: 'pp_1',
-    name: 'Inspección diaria de cable y torres',
+    name: 'Daily cable and tower inspection',
     target: { kind: 'category', category: 'cable-system' },
     frequencyValue: 1,
     frequencyUnit: 'days',
     lastDoneAt: today,
     nextDueAt: isoDate(addDays(NOW, 1)),
     assignedRole: 'supervisor',
-    checklist: ['Tensión de cable', 'Estado de poleas', 'Paro de emergencia', 'Bitácora firmada'],
+    checklist: ['Cable tension', 'Pulley condition', 'Emergency stop', 'Log signed'],
     estimatedMinutes: 30,
   },
   {
     id: 'pp_2',
-    name: 'Servicio 100 h motor fuera de borda',
+    name: '100-hour outboard engine service',
     target: { kind: 'category', category: 'boat' },
     frequencyValue: 100,
     frequencyUnit: 'hours',
     lastDoneAt: isoDate(addDays(NOW, -70)),
     nextDueAt: isoDate(addDays(NOW, 4)),
     assignedRole: 'maintenance',
-    checklist: ['Cambio de aceite', 'Filtro de combustible', 'Bujías', 'Ánodos de sacrificio', 'Prueba en agua'],
+    checklist: ['Oil change', 'Fuel filter', 'Spark plugs', 'Sacrificial anodes', 'On-water test'],
     estimatedMinutes: 180,
   },
   {
     id: 'pp_3',
-    name: 'Revisión semanal de chalecos y cascos',
+    name: 'Weekly vest and helmet check',
     target: { kind: 'category', category: 'vest' },
     frequencyValue: 1,
     frequencyUnit: 'weeks',
     lastDoneAt: isoDate(addDays(NOW, -6)),
     nextDueAt: isoDate(addDays(NOW, 1)),
     assignedRole: 'supervisor',
-    checklist: ['Hebillas y cierres', 'Costuras', 'Flotabilidad', 'Higienizado'],
+    checklist: ['Buckles and zippers', 'Stitching', 'Buoyancy', 'Sanitized'],
     estimatedMinutes: 60,
   },
   {
     id: 'pp_4',
-    name: 'Rotación y encerado de tablas de renta',
+    name: 'Rental board rotation and waxing',
     target: { kind: 'category', category: 'wakeboard' },
     frequencyValue: 1,
     frequencyUnit: 'months',
     lastDoneAt: isoDate(addDays(NOW, -34)),
     nextDueAt: isoDate(addDays(NOW, -3)),
     assignedRole: 'maintenance',
-    checklist: ['Revisar cantos', 'Apretar tornillería de fijaciones', 'Encerado de base', 'Actualizar horas de uso'],
+    checklist: ['Check edges', 'Tighten binding hardware', 'Wax the base', 'Update usage hours'],
     estimatedMinutes: 120,
   },
   {
     id: 'pp_5',
-    name: 'Inspección de anclajes del Aqua Park',
+    name: 'Aqua park anchor inspection',
     target: { kind: 'category', category: 'inflatable' },
     frequencyValue: 2,
     frequencyUnit: 'weeks',
     lastDoneAt: isoDate(addDays(NOW, -9)),
     nextDueAt: isoDate(addDays(NOW, 5)),
     assignedRole: 'supervisor',
-    checklist: ['Presión de módulos', 'Anclajes al fondo', 'Uniones entre módulos', 'Red perimetral'],
+    checklist: ['Module pressure', 'Bottom anchors', 'Module connectors', 'Perimeter net'],
     estimatedMinutes: 90,
   },
   {
@@ -590,26 +590,26 @@ export const preventivePlans: PreventivePlan[] = [
 ];
 
 const SUPPLY_SEED: Array<[string, string, string, number, number, number]> = [
-  ['Fijaciones de wakeboard (par)', 'Equipo', 'par', 14, 8, 129],
-  ['Aletas de repuesto', 'Equipo', 'unidad', 26, 12, 18],
-  ['Cuerda de tracción 70ft', 'Equipo', 'unidad', 6, 4, 89],
-  ['Manija de wake', 'Equipo', 'unidad', 9, 6, 45],
-  ['Cera para base de tabla', 'Equipo', 'lata', 3, 6, 22],
-  ['Kit de reparación de fibra', 'Taller', 'kit', 4, 3, 65],
-  ['Aceite motor 2T fuera de borda', 'Taller', 'galón', 5, 4, 42],
-  ['Nautique fuel filter', 'Taller', 'unidad', 2, 3, 34],
-  ['Grasa marina', 'Taller', 'tubo', 7, 4, 12],
-  ['Parche PVC para inflables', 'Aqua Park', 'kit', 5, 3, 38],
-  ['Cloro / tratamiento de agua', 'Instalaciones', 'galón', 11, 8, 27],
-  ['Bloqueador solar SPF50 (venta)', 'Pro Shop', 'unidad', 32, 20, 9],
-  ['Pulseras QR desechables', 'Recepción', 'caja x500', 4, 3, 78],
-  ['Etiquetas QR resistentes al agua', 'Recepción', 'rollo x1000', 2, 2, 96],
-  ['Toallas de cortesía', 'Pro Shop', 'unidad', 48, 30, 6],
-  ['Botiquín — vendas y gasas', 'Instalaciones', 'kit', 6, 4, 31],
-  ['Baterías radio Motorola', 'Operaciones', 'unidad', 3, 4, 55],
-  ['Camisetas Summer Camp', 'Summer Camp', 'unidad', 64, 40, 11],
-  ['Bloqueador en spray para camp', 'Summer Camp', 'unidad', 18, 12, 14],
-  ['Agua embotellada (caja)', 'Concesión', 'caja x24', 22, 15, 8],
+  ['Wakeboard bindings (pair)', 'Gear', 'pair', 14, 8, 129],
+  ['Replacement fins', 'Gear', 'unit', 26, 12, 18],
+  ['70ft tow rope', 'Gear', 'unit', 6, 4, 89],
+  ['Wake handle', 'Gear', 'unit', 9, 6, 45],
+  ['Board base wax', 'Gear', 'can', 3, 6, 22],
+  ['Fiberglass repair kit', 'Workshop', 'kit', 4, 3, 65],
+  ['2-stroke outboard oil', 'Workshop', 'gallon', 5, 4, 42],
+  ['Nautique fuel filter', 'Workshop', 'unit', 2, 3, 34],
+  ['Marine grease', 'Workshop', 'tube', 7, 4, 12],
+  ['PVC patch kit for inflatables', 'Aqua Park', 'kit', 5, 3, 38],
+  ['Chlorine / water treatment', 'Facilities', 'gallon', 11, 8, 27],
+  ['Sunscreen SPF50 (retail)', 'Pro Shop', 'unit', 32, 20, 9],
+  ['Disposable QR wristbands', 'Front desk', 'box of 500', 4, 3, 78],
+  ['Waterproof QR labels', 'Front desk', 'roll of 1000', 2, 2, 96],
+  ['Courtesy towels', 'Pro Shop', 'unit', 48, 30, 6],
+  ['First aid — bandages and gauze', 'Facilities', 'kit', 6, 4, 31],
+  ['Motorola radio batteries', 'Operations', 'unit', 3, 4, 55],
+  ['Summer Camp t-shirts', 'Summer Camp', 'unit', 64, 40, 11],
+  ['Spray sunscreen for camp', 'Summer Camp', 'unit', 18, 12, 14],
+  ['Bottled water (case)', 'Concession', 'case of 24', 22, 15, 8],
 ];
 
 export const supplies: Supply[] = SUPPLY_SEED.map(([name_, category, unit, stock, minStock, unitCost], i) => ({
@@ -621,7 +621,7 @@ export const supplies: Supply[] = SUPPLY_SEED.map(([name_, category, unit, stock
   stock,
   minStock,
   unitCost,
-  supplier: pick(rng, ['Buywake', 'West Marine', 'Amazon Business', 'Proveedor local FL', 'Wibit USA']),
+  supplier: pick(rng, ['Buywake', 'West Marine', 'Amazon Business', 'Local FL supplier', 'Wibit USA']),
   location: pick(rng, LOCATIONS),
   lastRestockAt: isoDate(addDays(NOW, -between(rng, 3, 90))),
 }));
@@ -644,8 +644,8 @@ export const campSessions: CampSession[] = Array.from({ length: 6 }, (_, i) => {
 });
 
 const GROUPS = ['Dolphins', 'Sharks', 'Barracudas', 'Manatees'];
-const ALLERGIES = ['Ninguna', 'Ninguna', 'Ninguna', 'Maní', 'Mariscos', 'Polen', 'Lácteos', 'Picadura de abeja'];
-const CONDITIONS = ['Ninguna', 'Ninguna', 'Ninguna', 'Asma leve', 'TDAH', 'Otitis recurrente'];
+const ALLERGIES = ['None', 'None', 'None', 'Peanuts', 'Shellfish', 'Pollen', 'Dairy', 'Bee sting'];
+const CONDITIONS = ['None', 'None', 'None', 'Mild asthma', 'TDAH', 'Recurrent ear infections'];
 
 export const campers: Camper[] = Array.from({ length: 42 }, (_, i) => {
   const { firstName, lastName } = name();
@@ -661,29 +661,29 @@ export const campers: Camper[] = Array.from({ length: 42 }, (_, i) => {
     groupName: pick(rng, GROUPS),
     tShirtSize: pick(rng, ['YS', 'YM', 'YL', 'AS']),
     guardians: [
-      { name: `${guardianFirst} ${lastName}`, relation: pick(rng, ['Madre', 'Padre']), phone: phone(), email: emailFor(guardianFirst, lastName, i), isPrimary: true },
+      { name: `${guardianFirst} ${lastName}`, relation: pick(rng, ['Mother', 'Father']), phone: phone(), email: emailFor(guardianFirst, lastName, i), isPrimary: true },
       ...(rng() < 0.6
-        ? [{ name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Padre', 'Madre', 'Padrastro']), phone: phone(), email: emailFor(pick(rng, FIRST), lastName, i + 100), isPrimary: false }]
+        ? [{ name: `${pick(rng, FIRST)} ${lastName}`, relation: pick(rng, ['Father', 'Mother', 'Stepparent']), phone: phone(), email: emailFor(pick(rng, FIRST), lastName, i + 100), isPrimary: false }]
         : []),
     ],
     emergencyContacts: [
-      { name: `${pick(rng, FIRST)} ${pick(rng, LAST)}`, relation: pick(rng, ['Abuela', 'Abuelo', 'Tía', 'Tío', 'Vecina']), phone: phone() },
+      { name: `${pick(rng, FIRST)} ${pick(rng, LAST)}`, relation: pick(rng, ['Grandmother', 'Grandfather', 'Aunt', 'Uncle', 'Neighbor']), phone: phone() },
     ],
     authorizedPickup: Array.from({ length: between(rng, 1, 3) }, () => ({
       name: `${pick(rng, FIRST)} ${pick(rng, LAST)}`,
-      relation: pick(rng, ['Abuela', 'Tía', 'Niñera', 'Tío', 'Vecino']),
+      relation: pick(rng, ['Grandmother', 'Aunt', 'Nanny', 'Uncle', 'Neighbor']),
       phone: phone(),
       idNumber: `FL-${between(rng, 100000, 999999)}`,
     })),
     medical: {
       allergies: allergy,
       conditions: pick(rng, CONDITIONS),
-      medications: rng() < 0.2 ? 'Inhalador de rescate según necesidad' : 'Ninguno',
+      medications: rng() < 0.2 ? 'Rescue inhaler as needed' : 'None',
       doctorName: `Dr. ${pick(rng, LAST)}`,
       doctorPhone: phone(),
-      insurance: pick(rng, ['Florida Blue', 'Aetna', 'Cigna', 'Ambetter', 'Sin seguro']),
+      insurance: pick(rng, ['Florida Blue', 'Aetna', 'Cigna', 'Ambetter', 'No insurance']),
       swimLevel: pick(rng, ['none', 'beginner', 'beginner', 'intermediate', 'strong'] as const),
-      epipen: allergy === 'Maní' || allergy === 'Picadura de abeja' ? rng() < 0.7 : false,
+      epipen: allergy === 'Peanuts' || allergy === 'Bee sting' ? rng() < 0.7 : false,
     },
     photoRelease: rng() < 0.85,
     waiverSigned: rng() < 0.88,
@@ -714,14 +714,14 @@ export const campAttendance: CampAttendance[] = (() => {
 })();
 
 const ACTIVITY_NAMES = [
-  ['Calentamiento y charla de seguridad', 'Muelle norte'],
-  ['Rotación de cable — System 2.0', 'System 2.0'],
-  ['Aqua Park libre', 'Aqua Park'],
-  ['Almuerzo y descanso', 'Cabaña central'],
-  ['Clínica de trucos', 'Zona de obstáculos'],
-  ['Juegos de agua en equipo', 'Playa'],
-  ['Taller de cuidado del equipo', 'Pro Shop'],
-  ['Cierre del día y premiación', 'Cabaña central'],
+  ['Warm-up and safety talk', 'Cable dock'],
+  ['Cable rotation — System 2.0', 'System 2.0'],
+  ['Free aqua park time', 'Aqua Park'],
+  ['Lunch and rest', 'Main cabana'],
+  ['Trick clinic', 'Obstacle zone'],
+  ['Team water games', 'Beach'],
+  ['Gear care workshop', 'Pro Shop'],
+  ['Day wrap-up and awards', 'Main cabana'],
 ];
 
 export const campActivities: CampActivity[] = (() => {

@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CircleStop, HardHat, Plus, Radio, RectangleHorizontal, Timer, TrendingDown, Waves } from 'lucide-react';
 import { congestion } from '@/lib/analytics';
+import { PersonAvatar } from '@/components/CustomerQuickView';
 import { useStore } from '@/lib/store';
 import { LINE_LABELS, PACKAGE_META, type CableLine } from '@/lib/types';
 import { cn, formatTime, num, pct, relativeTime } from '@/lib/utils';
-import { Avatar, Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Segmented } from '@/components/ui';
+import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Segmented } from '@/components/ui';
 
 /**
  * Tablero del supervisor de muelle: quién está en el agua, en qué línea, cuánto
@@ -113,7 +114,7 @@ export default function LiveOps() {
               value={filter}
               onChange={setFilter}
               options={[
-                { value: 'all', label: 'Todas' },
+                { value: 'all', label: 'All' },
                 ...(Object.keys(LINE_LABELS) as CableLine[]).map((l) => ({ value: l, label: LINE_LABELS[l].split(' ')[0] })),
               ]}
             />
@@ -143,7 +144,7 @@ export default function LiveOps() {
               return (
                 <div key={s.id} className={cn('rounded-xl border p-4 transition', remaining <= 5 ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200')}>
                   <div className="flex items-start gap-3">
-                    <Avatar name={c ? `${c.firstName} ${c.lastName}` : 'Rider'} size="md" />
+                    <PersonAvatar customerId={s.customerId} name={c ? `${c.firstName} ${c.lastName}` : 'Rider'} src={c?.photoUrl} size="md" />
                     <div className="min-w-0 flex-1">
                       <Link to={`/customers/${s.customerId}`} className="block truncate text-sm font-bold text-deep-900 hover:text-lagoon-700">
                         {c ? `${c.firstName} ${c.lastName}` : 'Rider'}

@@ -1,5 +1,5 @@
 /**
- * Modelo de dominio — Miami Water Sports Complex (Hialeah, FL)
+ * Modelo de dominio — Miami Watersports Complex (Hialeah, FL)
  *
  * Un solo lugar donde vive la forma de los datos. El prototipo trabaja contra
  * datos en memoria (ver `data/seed.ts`), pero estos tipos son los mismos que
@@ -159,7 +159,7 @@ export type AssetCondition = 'new' | 'good' | 'fair' | 'poor' | 'retired';
 
 export interface Asset {
   id: string;
-  code: string; // MWS-BRD-014
+  code: string; // MWC-BRD-014
   name: string;
   category: AssetCategory;
   brand: string;
@@ -173,6 +173,8 @@ export interface Asset {
   condition: AssetCondition;
   status: AssetStatus;
   location: string;
+  /** Casillero rotulado del pro shop (A1, B3, C2…) donde vive la pieza. */
+  storageSlot?: string;
   /** Horas de uso acumuladas — dispara el mantenimiento preventivo. */
   usageHours: number;
   serviceIntervalHours?: number;
@@ -219,14 +221,15 @@ export interface AssetEvent {
 
 /* ───────────────────────────── Operación / rides ────────────────────────── */
 
-export type CableLine = 'full-cable' | 'system-2' | 'kicker' | 'aqua-park' | 'boat';
+export type CableLine = 'full-cable' | 'system-2' | 'kicker' | 'aqua-park' | 'wakesurf' | 'tubing';
 
 export const LINE_LABELS: Record<CableLine, string> = {
   'full-cable': 'Full cable (5 towers)',
   'system-2': 'System 2.0 (beginners)',
   kicker: 'Obstacle zone',
-  'aqua-park': 'Inflatable Aqua Park',
-  boat: 'Boat / tubing',
+  'aqua-park': 'Aqua park',
+  wakesurf: 'Wakesurf (boat)',
+  tubing: 'Tubing (boat)',
 };
 
 export type PackageType =
@@ -237,6 +240,10 @@ export type PackageType =
   | 'season-pass'
   | 'lesson'
   | 'aqua-park'
+  | 'wakesurf'
+  | 'tubing'
+  | 'birthday'
+  | 'corporate'
   | 'camp';
 
 export const PACKAGE_META: Record<PackageType, { label: string; minutes: number; price: number }> = {
@@ -246,7 +253,11 @@ export const PACKAGE_META: Record<PackageType, { label: string; minutes: number;
   'full-day': { label: 'Full day', minutes: 480, price: 150 },
   'season-pass': { label: 'Season pass', minutes: 480, price: 899 },
   lesson: { label: 'Private lesson', minutes: 60, price: 95 },
-  'aqua-park': { label: 'Aqua Park (1h)', minutes: 60, price: 30 },
+  'aqua-park': { label: 'Aqua park (1h)', minutes: 60, price: 30 },
+  wakesurf: { label: 'Wakesurf session (boat)', minutes: 60, price: 220 },
+  tubing: { label: 'Tubing session (boat)', minutes: 60, price: 180 },
+  birthday: { label: 'Birthday party', minutes: 180, price: 650 },
+  corporate: { label: 'Corporate event', minutes: 240, price: 1800 },
   camp: { label: 'Summer Camp (day)', minutes: 480, price: 85 },
 };
 

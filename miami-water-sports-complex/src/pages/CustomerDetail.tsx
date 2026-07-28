@@ -313,7 +313,7 @@ export default function CustomerDetail() {
           <Card>
             <CardHeader title="Credencial digital" subtitle="Escaneable en recepción" />
             <div className="flex justify-center p-5">
-              <QrCode value={`mws://member/${customer.memberCode}`} label={customer.memberCode} caption="Identifica al cliente sin buscarlo por nombre" size={140} />
+              <QrCode value={`mwc://member/${customer.memberCode}`} label={customer.memberCode} caption="Identifica al cliente sin buscarlo por nombre" size={140} />
             </div>
           </Card>
 

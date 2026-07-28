@@ -1,7 +1,10 @@
-# Miami Water Sports Complex — Management System
+# Miami Watersports Complex — Management System
 
-Working front-end prototype for the day-to-day operation of the cable wakeboard
-park and aqua park in Hialeah, FL.
+Working front-end prototype for the day-to-day operation of Miami Watersports
+Complex — cable wakeboard park, obstacle line, aqua park and boat services in
+Hialeah, FL. Codes, services and equipment follow the real park: helmets and
+vests branded MWC, Hyperlite / Liquid Force boards, Nautique boats, a Rixen
+System 2.0 alongside the full cable, and pro-shop racks labeled A1–F6.
 
 The app runs entirely in the browser against seeded demo data persisted in
 `localStorage`, so every screen is clickable and every action has a real effect
@@ -59,6 +62,7 @@ Label specification and the full flow are documented in-app under
 | **Lap scanner** | Always-focused scan station for helmet/board QR; works with a phone camera or a Bluetooth reader |
 | **Check-in & gear** | Find or create the customer → sign the waiver → charge the package → hand out gear → open the session |
 | **Reservations** | Weekly agenda and list, booking sources, convert to check-in |
+| **Services covered** | Cable (full + System 2.0), obstacle zone, aqua park, wakesurf and tubing behind the boat, lessons, birthday parties, corporate events, Summer Camp |
 | **Customers** | CRM with tiers, lifetime spend, visit history, churn risk, CSV export |
 | **Waivers** | Digital signature capture, expiry tracking, self-service kiosk QR, who cannot enter the water |
 | **Loyalty & points** | Four tiers, points per dollar, rewards catalog, redemptions, leaderboard |

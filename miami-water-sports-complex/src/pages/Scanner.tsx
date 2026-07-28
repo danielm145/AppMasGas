@@ -95,7 +95,7 @@ export default function Scanner() {
               ref={inputRef}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="MWS-HLM-062"
+              placeholder="MWC-HLM-062"
               className="h-12 border-white/20 bg-white/10 text-center font-mono text-lg font-bold uppercase tracking-[0.2em] text-white placeholder:text-white/40 focus:border-lagoon-300"
             />
             <Button type="submit" variant="accent" size="lg" className="shrink-0">
@@ -106,7 +106,7 @@ export default function Scanner() {
             Record as a fall (lap not completed)
           </button>
           <p className="mx-auto mt-4 max-w-md text-[11px] leading-relaxed text-white/50">
-            Helmets and boards carry a permanent vinyl label: use the helmet code (<span className="font-mono">MWS-HLM-…</span>) or the board code (<span className="font-mono">MWS-BRD-…</span>) — both resolve to the same session. Every scan is signed by the employee who made it — right now, <span className="font-semibold text-white/80">{currentUser.firstName} {currentUser.lastName}</span>.
+            Helmets and boards carry a permanent vinyl label: use the helmet code (<span className="font-mono">MWC-HLM-…</span>) or the board code (<span className="font-mono">MWC-BRD-…</span>) — both resolve to the same session. Every scan is signed by the employee who made it — right now, <span className="font-semibold text-white/80">{currentUser.firstName} {currentUser.lastName}</span>.
           </p>
         </div>
       </Card>

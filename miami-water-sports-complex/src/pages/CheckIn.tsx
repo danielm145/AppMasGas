@@ -227,7 +227,7 @@ export default function CheckIn() {
           <div className="p-5">
             {!creating ? (
               <>
-                <SearchInput value={query} onChange={setQuery} placeholder="María Rodríguez, (305) 555-0100, MWS-1004…" />
+                <SearchInput value={query} onChange={setQuery} placeholder="María Rodríguez, (305) 555-0100, MWC-1004…" />
                 <ul className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-200">
                   {results.map((c) => {
                     const waiver = state.waivers.find((w) => w.customerId === c.id && new Date(w.expiresAt) > new Date());
@@ -370,7 +370,7 @@ export default function CheckIn() {
                 casco y chaleco durante toda la actividad, así como a seguir las instrucciones del personal.
               </p>
               <p className="mb-2">
-                Libero de toda responsabilidad a Miami Water Sports Complex, sus propietarios, empleados y aseguradoras por cualquier daño derivado de mi
+                Libero de toda responsabilidad a Miami Watersports Complex, sus propietarios, empleados y aseguradoras por cualquier daño derivado de mi
                 participación, salvo en casos de negligencia grave comprobada.
               </p>
               <p>

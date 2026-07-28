@@ -89,7 +89,7 @@ export default function Reports() {
               }
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-deep-900 hover:bg-slate-50"
             >
-              <Download className="h-4 w-4" /> Exportar
+              <Download className="h-4 w-4" /> Export
             </button>
           </>
         }

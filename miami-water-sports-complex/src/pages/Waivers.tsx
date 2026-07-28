@@ -84,7 +84,7 @@ export default function Waivers() {
               variant="outline"
               onClick={() =>
                 downloadCsv(
-                  'waivers-mws.csv',
+                  'waivers-mwc.csv',
                   enriched.map((w) => ({
                     Firmante: w.signerName,
                     Tipo: WAIVER_LABELS[w.type],
@@ -248,7 +248,7 @@ export default function Waivers() {
 
       <Modal open={kioskOpen} onClose={() => setKioskOpen(false)} title="Kiosco de firma digital" subtitle="Pega este QR en recepción — el cliente firma desde su propio teléfono" size="sm">
         <div className="flex flex-col items-center gap-4 py-2">
-          <QrCode value="https://waiver.miamiwatersports.com/firmar" size={200} caption="El waiver firmado entra directo al sistema y queda listo antes de que lleguen al mostrador." />
+          <QrCode value="https://waiver.miamiwatersportscomplex.com/firmar" size={200} caption="El waiver firmado entra directo al sistema y queda listo antes de que lleguen al mostrador." />
           <ul className="w-full space-y-2 text-xs text-slate-600">
             <li className="flex gap-2">
               <span className="font-bold text-lagoon-600">1.</span> El cliente escanea el QR con la cámara del teléfono.

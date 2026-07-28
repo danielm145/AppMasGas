@@ -22,7 +22,7 @@ export const LANGUAGES: { code: Lang; label: string; flag: string }[] = [
 
 const DICTIONARIES: Record<Lang, Record<string, string>> = { en: {}, es: ES };
 
-const STORAGE_KEY = 'mws.lang';
+const STORAGE_KEY = 'mwc.lang';
 
 export type TranslateFn = (key: string, vars?: Record<string, string | number>) => string;
 

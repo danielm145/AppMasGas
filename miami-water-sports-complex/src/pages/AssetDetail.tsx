@@ -196,6 +196,7 @@ export default function AssetDetail() {
                   <Badge tone="slate">
                     <MapPin className="h-3 w-3" /> {asset.location}
                   </Badge>
+                  {asset.storageSlot && <Badge tone="lagoon">Slot {asset.storageSlot}</Badge>}
                   {asset.serial && <Badge tone="slate">S/N {asset.serial}</Badge>}
                   {assignedTo && (
                     <Link to={`/customers/${assignedTo.id}`}>
@@ -297,7 +298,7 @@ export default function AssetDetail() {
           <Card>
             <CardHeader title="Etiqueta QR" subtitle="Pégala al activo para escanearlo" />
             <div className="flex justify-center p-5">
-              <QrCode value={`mws://asset/${asset.code}`} label={asset.code} size={140} caption="Escanea para abrir la ficha, reportar un daño o registrar una inspección." />
+              <QrCode value={`mwc://asset/${asset.code}`} label={asset.code} size={140} caption="Escanea para abrir la ficha, reportar un daño o registrar una inspección." />
             </div>
           </Card>
 

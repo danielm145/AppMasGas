@@ -61,6 +61,7 @@ const EMPTY_DRAFT = {
   purchasePrice: 0,
   vendor: '',
   location: 'Pro Shop',
+  storageSlot: '',
   serviceIntervalHours: 300,
   photoUrl: undefined as string | undefined,
   notes: '',
@@ -107,6 +108,7 @@ export default function Assets() {
     if (!draft.code || !draft.name) return;
     addAsset({
       ...draft,
+      storageSlot: draft.storageSlot || undefined,
       photoUrl: draft.photoUrl ?? assetPhoto(draft.code, draft.category),
       condition: 'new',
       status: 'available',
@@ -129,7 +131,7 @@ export default function Assets() {
               variant="outline"
               onClick={() =>
                 downloadCsv(
-                  'activos-mws.csv',
+                  'assets-mwc.csv',
                   rows.map((a) => ({
                     Codigo: a.code,
                     Nombre: a.name,
@@ -140,13 +142,14 @@ export default function Assets() {
                     Precio: a.purchasePrice,
                     Estado: STATUS_META[a.status].label,
                     Condicion: CONDITION_LABELS[a.condition],
-                    Ubicacion: a.location,
+                    Location: a.location,
+                    Slot: a.storageSlot ?? '',
                     HoursUso: Math.round(a.usageHours),
                   })),
                 )
               }
             >
-              <Download className="h-4 w-4" /> Exportar
+              <Download className="h-4 w-4" /> Export
             </Button>
             <Button variant="outline" onClick={() => setLabelsOpen(true)}>
               <QrCode className="h-4 w-4" /> QR labels
@@ -174,7 +177,7 @@ export default function Assets() {
             category === 'all' ? 'border-lagoon-500 bg-lagoon-50 text-lagoon-800' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
           )}
         >
-          Todos <span className="ml-1 text-slate-400">{state.assets.length}</span>
+          All <span className="ml-1 text-slate-400">{state.assets.length}</span>
         </button>
         {(Object.keys(ASSET_CATEGORY_LABELS) as AssetCategory[])
           .filter((c) => byCategory[c])
@@ -252,7 +255,10 @@ export default function Assets() {
                       {STATUS_META[a.status].label}
                     </Badge>
                   </Td>
-                  <Td className="text-[12px] text-slate-600">{a.location}</Td>
+                  <Td className="text-[12px] text-slate-600">
+                    {a.location}
+                    {a.storageSlot && <span className="ml-1.5 font-mono text-[11px] font-bold text-lagoon-700">{a.storageSlot}</span>}
+                  </Td>
                   <Td className="text-right tabular-nums">{Math.round(a.usageHours)}</Td>
                   <Td className="text-right tabular-nums">{money(a.purchasePrice)}</Td>
                   <Td>
@@ -293,8 +299,8 @@ export default function Assets() {
             label="Asset photo"
             hint="If you do not upload a photo, a catalog image is generated automatically"
           />
-          <Field label="Internal code" required hint="Ej. MWS-BRD-045">
-            <Input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value.toUpperCase() })} placeholder="MWS-BRD-045" />
+          <Field label="Internal code" required hint="Ej. MWC-BRD-045">
+            <Input value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value.toUpperCase() })} placeholder="MWC-BRD-045" />
           </Field>
           <Field label="First name" required>
             <Input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Ronix Vault 142cm" />
@@ -335,6 +341,9 @@ export default function Assets() {
                 <option key={l}>{l}</option>
               ))}
             </Select>
+          </Field>
+          <Field label="Storage slot" hint="Labeled shelf position in the pro shop (A1, B3…)">
+            <Input value={draft.storageSlot} onChange={(e) => setDraft({ ...draft, storageSlot: e.target.value.toUpperCase() })} placeholder="B3" />
           </Field>
           <Field label="Service interval (hours)" hint="Triggers preventive maintenance">
             <Input type="number" value={draft.serviceIntervalHours} onChange={(e) => setDraft({ ...draft, serviceIntervalHours: Number(e.target.value) })} />
@@ -387,6 +396,7 @@ function AssetCard({ asset }: { asset: Asset }) {
         <p className="mt-0.5 truncate text-sm font-bold text-deep-900">{asset.name}</p>
         <p className="text-[11px] text-slate-500">
           {ASSET_CATEGORY_LABELS[asset.category]} · {asset.location}
+          {asset.storageSlot && <span className="ml-1 font-mono font-bold text-lagoon-700">{asset.storageSlot}</span>}
         </p>
         <div className="mt-auto pt-3">
           <div className="mb-1 flex items-baseline justify-between text-[10px]">

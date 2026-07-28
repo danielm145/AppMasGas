@@ -72,7 +72,7 @@ export default function Customers() {
               variant="outline"
               onClick={() =>
                 downloadCsv(
-                  'clientes-mws.csv',
+                  'customers-mwc.csv',
                   rows.map((c) => ({
                     Codigo: c.memberCode,
                     Nombre: `${c.firstName} ${c.lastName}`,

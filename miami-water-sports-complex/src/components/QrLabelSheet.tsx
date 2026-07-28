@@ -9,7 +9,7 @@ import { Button } from './ui';
  * Hoja de etiquetas QR lista para imprimir en papel adhesivo resistente al agua.
  *
  * Una etiqueta por activo: se pega al casco y a cada tabla. El QR codifica
- * `mws://asset/<código>`, así que escanearlo desde el teléfono del operador
+ * `mwc://asset/<código>`, así que escanearlo desde el teléfono del operador
  * resuelve tanto la vuelta del rider como la trazabilidad del equipo entregado.
  */
 export function QrLabelSheet({ assets }: { assets: Asset[] }) {
@@ -18,7 +18,7 @@ export function QrLabelSheet({ assets }: { assets: Asset[] }) {
   useEffect(() => {
     let cancelled = false;
     Promise.all(
-      assets.map(async (a) => [a.id, await QRCode.toDataURL(`mws://asset/${a.code}`, { width: 240, margin: 0, color: { dark: '#0d1f33', light: '#ffffff' } })] as const),
+      assets.map(async (a) => [a.id, await QRCode.toDataURL(`mwc://asset/${a.code}`, { width: 240, margin: 0, color: { dark: '#0d1f33', light: '#ffffff' } })] as const),
     ).then((pairs) => {
       if (!cancelled) setCodes(Object.fromEntries(pairs));
     });
@@ -48,7 +48,7 @@ export function QrLabelSheet({ assets }: { assets: Asset[] }) {
               <div className="h-16 w-16 shrink-0 animate-pulse rounded bg-slate-100" />
             )}
             <div className="min-w-0">
-              <p className="text-[8px] font-bold uppercase tracking-widest text-lagoon-600">Miami Water Sports</p>
+              <p className="text-[8px] font-bold uppercase tracking-widest text-lagoon-600">Miami Watersports</p>
               <p className="truncate font-mono text-[11px] font-black tracking-tight text-deep-900">{a.code}</p>
               <p className="truncate text-[9px] leading-tight text-slate-500">{ASSET_CATEGORY_LABELS[a.category]}</p>
               <p className="truncate text-[9px] leading-tight text-slate-400">{a.size ?? a.brand}</p>

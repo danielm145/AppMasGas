@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 /**
  * Genera el QR que se imprime en la pulsera o en la etiqueta adhesiva del casco.
  *
- * El payload es una URL corta del tipo `mws://ride/WB-00123`; el lector del
+ * El payload es una URL corta del tipo `mwc://ride/WB-00123`; el lector del
  * operador solo necesita el código, pero usar un esquema con prefijo permite
  * que mañana una cámara genérica abra la app en el registro correcto.
  */
@@ -73,7 +73,7 @@ export function QrTag({
   const [dataUrl, setDataUrl] = useState<string>();
 
   useEffect(() => {
-    QRCode.toDataURL(`mws://ride/${code}`, { width: 320, margin: 1, color: { dark: '#0d1f33', light: '#ffffff' } }).then(setDataUrl);
+    QRCode.toDataURL(`mwc://ride/${code}`, { width: 320, margin: 1, color: { dark: '#0d1f33', light: '#ffffff' } }).then(setDataUrl);
   }, [code]);
 
   const download = () => {
@@ -93,7 +93,7 @@ export function QrTag({
           <div className="h-[110px] w-[110px] animate-pulse rounded-lg bg-slate-100" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-lagoon-600">Miami Water Sports</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-lagoon-600">Miami Watersports</p>
           <p className="mt-0.5 truncate text-base font-extrabold text-deep-900">{title}</p>
           {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
           <p className="mt-1.5 font-mono text-sm font-bold tracking-widest text-deep-900">{code}</p>

@@ -49,7 +49,7 @@ export function AppShell() {
           <BRAND_ICON className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-extrabold leading-tight text-white">Miami Water Sports</p>
+          <p className="truncate text-[13px] font-extrabold leading-tight text-white">Miami Watersports</p>
           <p className="text-[10px] font-medium uppercase tracking-widest text-lagoon-400">Hialeah · FL</p>
         </div>
         <button className="ml-auto text-slate-400 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu">

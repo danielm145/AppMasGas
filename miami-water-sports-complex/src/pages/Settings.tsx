@@ -25,15 +25,15 @@ import {
 } from '@/components/ui';
 import { NAV } from '@/lib/nav';
 
-const CAPACITY: Record<CableLine, number> = { 'full-cable': 10, 'system-2': 6, kicker: 4, 'aqua-park': 40, boat: 8 };
+const CAPACITY: Record<CableLine, number> = { 'full-cable': 10, 'system-2': 6, kicker: 4, 'aqua-park': 40, wakesurf: 4, tubing: 6 };
 
 export default function Settings() {
   const { toast } = useStore();
   const [park, setPark] = useState({
-    name: 'Miami Water Sports Complex',
+    name: 'Miami Watersports Complex',
     address: '5151 NW 79th Ave, Hialeah, FL 33166',
-    phone: '(305) 555-0180',
-    email: 'info@miamiwatersports.com',
+    phone: '(305) 476-9253',
+    email: 'info@miamiwatersportscomplex.com',
     open: '10:00',
     close: '19:00',
     waiverMonths: 12,
@@ -213,7 +213,7 @@ export default function Settings() {
               <div className="space-y-4 p-5 text-sm text-slate-600">
                 <p>
                   Cada <strong>casco</strong> y cada <strong>tabla</strong> lleva pegada una etiqueta QR permanente con su código de activo
-                  (<span className="font-mono text-xs">MWS-HLM-062</span>, <span className="font-mono text-xs">MWS-BRD-014</span>). Se imprime una sola vez, al
+                  (<span className="font-mono text-xs">MWC-HLM-062</span>, <span className="font-mono text-xs">MWC-BRD-014</span>). Se imprime una sola vez, al
                   dar de alta el activo.
                 </p>
                 <ul className="space-y-2">
@@ -241,7 +241,7 @@ export default function Settings() {
                     ['Tamaño', '30 × 30 mm (casco) · 40 × 40 mm (tabla)'],
                     ['Adhesivo', 'Permanente, resistente al agua y al cloro'],
                     ['Corrección de errores', 'Nivel M (recupera hasta 15% dañado)'],
-                    ['Contenido', 'mws://asset/<código> + código legible'],
+                    ['Contenido', 'mwc://asset/<código> + código legible'],
                     ['Reemplazo', 'Solo si se despega o se raya; el código no cambia'],
                   ].map(([k, v]) => (
                     <div key={k} className="flex items-baseline justify-between gap-3 py-2.5">

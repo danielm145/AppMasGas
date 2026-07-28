@@ -355,7 +355,7 @@ export default function Marketing() {
               ))}
             </div>
             <div className="rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-lagoon-600">Miami Water Sports Complex</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-lagoon-600">Miami Watersports Complex</p>
               {preview.subject && <p className="mt-1 text-lg font-extrabold text-deep-900">{preview.subject}</p>}
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{preview.preview}</p>
               <Button size="sm" className="mt-4">

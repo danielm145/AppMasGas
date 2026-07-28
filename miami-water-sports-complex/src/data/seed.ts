@@ -92,7 +92,7 @@ export const employees: Employee[] = EMPLOYEE_SEED.map(([firstName, lastName, ro
   id: `emp_${i + 1}`,
   firstName,
   lastName,
-  email: emailFor(firstName, lastName, i).replace('example.com', 'miamiwatersports.com'),
+  email: emailFor(firstName, lastName, i).replace('example.com', 'miamiwatersportscomplex.com'),
   phone: phone(),
   role,
   hireDate,
@@ -150,7 +150,7 @@ export const customers: Customer[] = Array.from({ length: 64 }, (_, i) => {
     lifetimeSpend,
     lastVisitAt: lastVisit.toISOString(),
     tags: Array.from(new Set(Array.from({ length: between(rng, 0, 2) }, () => pick(rng, TAGS)))),
-    memberCode: `MWS-${String(1000 + i)}`,
+    memberCode: `MWC-${String(1000 + i)}`,
   };
 });
 
@@ -177,26 +177,26 @@ export const waivers: Waiver[] = customers.slice(0, 52).map((c, i) => {
 
 const ASSET_BLUEPRINT: Array<[AssetCategory, string, string, string[], number, number]> = [
   // categoría, marca, prefijo de código, tallas, precio, cantidad
-  ['wakeboard', 'Ronix', 'BRD', ['134cm', '138cm', '142cm', '146cm'], 520, 22],
+  ['wakeboard', 'Hyperlite', 'BRD', ['134cm', '138cm', '142cm', '146cm'], 520, 22],
   ['wakeboard', 'Liquid Force', 'BRD', ['136cm', '140cm', '144cm'], 480, 10],
   ['wakeskate', 'Hyperlite', 'SKT', ['41"', '43"'], 340, 6],
   ['kneeboard', 'O’Brien', 'KNB', ['Único'], 260, 6],
   ['helmet', 'Slam', 'HLM', ['S', 'M', 'L', 'XL'], 65, 26],
   ['vest', 'Follow', 'VST', ['XS', 'S', 'M', 'L', 'XL'], 90, 30],
-  ['boat', 'Yamaha', 'BOT', ['21ft'], 48000, 2],
-  ['boat', 'Bayliner', 'BOT', ['18ft'], 26000, 1],
-  ['obstacle', 'Unit Parktech', 'OBS', ['Kicker', 'Rail 30ft', 'A-Frame'], 7800, 4],
+  ['boat', 'Nautique', 'BOT', ['G23', 'GS22'], 62000, 2],
+  ['boat', 'Nautique', 'BOT', ['Sport 200'], 38000, 1],
+  ['obstacle', 'Unit Parktech', 'OBS', ['Kicker', 'Rail 30ft', 'A-Frame', 'Double-up kicker'], 7800, 5],
   ['cable-system', 'Sesitec', 'CBL', ['System 2.0', 'Full Cable'], 145000, 2],
   ['inflatable', 'Wibit', 'INF', ['Módulo'], 4200, 9],
 ];
 
-const LOCATIONS = ['Pro Shop', 'Bodega principal', 'Muelle norte', 'Muelle sur', 'Taller', 'Aqua Park'];
+const LOCATIONS = ['Pro Shop', 'Main storage', 'Cable dock', 'Boat dock', 'Workshop', 'Aqua park'];
 
 let assetSeq = 0;
 export const assets: Asset[] = ASSET_BLUEPRINT.flatMap(([category, brand, prefix, sizes, price, count]) =>
   Array.from({ length: count }, () => {
     assetSeq += 1;
-    const code = `MWS-${prefix}-${String(assetSeq).padStart(3, '0')}`;
+    const code = `MWC-${prefix}-${String(assetSeq).padStart(3, '0')}`;
     const purchase = addDays(NOW, -between(rng, 30, 1500));
     const usageHours = between(rng, 5, 900);
     const interval = category === 'boat' ? 100 : category === 'cable-system' ? 250 : 300;
@@ -220,6 +220,9 @@ export const assets: Asset[] = ASSET_BLUEPRINT.flatMap(([category, brand, prefix
       condition: status === 'retired' ? 'retired' : pick(rng, ['new', 'good', 'good', 'good', 'fair', 'poor'] as const),
       status,
       location: pick(rng, LOCATIONS),
+      storageSlot: ['wakeboard', 'wakeskate', 'kneeboard', 'vest', 'helmet'].includes(category)
+        ? `${'ABCDEF'[between(rng, 0, 5)]}${between(rng, 1, 6)}`
+        : undefined,
       usageHours,
       serviceIntervalHours: interval,
       lastServiceAt: isoDate(lastService),
@@ -269,8 +272,8 @@ export const assetEvents: AssetEvent[] = assets.flatMap((a) => {
 
 /* ──────────────────── Sesiones de ride, vueltas, reservas ───────────────── */
 
-const PACKAGES: PackageType[] = ['hour-1', 'hour-1', 'hour-2', 'half-day', 'full-day', 'lesson', 'aqua-park'];
-const LINES = ['full-cable', 'full-cable', 'system-2', 'kicker', 'aqua-park'] as const;
+const PACKAGES: PackageType[] = ['hour-1', 'hour-1', 'hour-2', 'half-day', 'full-day', 'lesson', 'aqua-park', 'wakesurf', 'tubing'];
+const LINES = ['full-cable', 'full-cable', 'system-2', 'kicker', 'aqua-park', 'wakesurf', 'tubing'] as const;
 
 /** Curva de afluencia: sábado/domingo pesados, pico 14–17 h. */
 function trafficWeight(date: Date, hour: number) {
@@ -299,7 +302,7 @@ for (let d = 59; d >= 0; d--) {
       const minutes = packageType === 'hour-1' ? 60 : packageType === 'hour-2' ? 120 : packageType === 'lesson' ? 60 : 240;
       const isLive = d === 0 && hour >= NOW.getHours() - 1 && hour <= NOW.getHours();
       const laps = between(rng, 4, Math.max(6, Math.round(minutes / 4)));
-      const price = { 'hour-1': 45, 'hour-2': 75, 'half-day': 110, 'full-day': 150, lesson: 95, 'aqua-park': 30, 'season-pass': 899, camp: 85 }[packageType];
+      const price = { 'hour-1': 45, 'hour-2': 75, 'half-day': 110, 'full-day': 150, lesson: 95, 'aqua-park': 30, wakesurf: 220, tubing: 180, birthday: 650, corporate: 1800, 'season-pass': 899, camp: 85 }[packageType];
       const sessionId = `ses_${sessionSeq}`;
       rideSessions.push({
         id: sessionId,
@@ -462,7 +465,7 @@ const TICKET_SEED: Array<[string, string, string, MaintenanceTicket['priority'],
   ['Cable principal hace ruido en torre 3', 'Se escucha un chirrido metálico intermitente al pasar el carro por la torre 3. Se sospecha rodamiento.', 'Cable park', 'critical', 'in-progress'],
   ['Motor del System 2.0 se sobrecalienta', 'Después de 3 h continuas el motor llega a temperatura de alarma y corta.', 'Cable park', 'high', 'waiting-parts'],
   ['Rail de 30ft con tornillería suelta', 'Dos pernos del anclaje central están flojos. Riesgo de desplazamiento.', 'Obstáculos', 'high', 'open'],
-  ['Bote Yamaha — filtro de combustible', 'Mantenimiento programado de 100 h: cambio de filtro y bujías.', 'Muelle sur', 'medium', 'open'],
+  ['Nautique boat — fuel filter service', 'Mantenimiento programado de 100 h: cambio de filtro y bujías.', 'Muelle sur', 'medium', 'open'],
   ['Fuga en tubería de la ducha exterior', 'Goteo constante en la ducha 2 del área de vestidores.', 'Instalaciones', 'low', 'open'],
   ['Inflable Wibit módulo 4 pierde aire', 'Pierde presión en ~6 h. Posible pinchazo en la costura inferior.', 'Aqua Park', 'medium', 'in-progress'],
   ['Cambio de cuerdas y manijas', 'Rotación trimestral de líneas de tracción del cable completo.', 'Cable park', 'medium', 'resolved'],
@@ -580,7 +583,7 @@ const SUPPLY_SEED: Array<[string, string, string, number, number, number]> = [
   ['Cera para base de tabla', 'Equipo', 'lata', 3, 6, 22],
   ['Kit de reparación de fibra', 'Taller', 'kit', 4, 3, 65],
   ['Aceite motor 2T fuera de borda', 'Taller', 'galón', 5, 4, 42],
-  ['Filtro de combustible Yamaha', 'Taller', 'unidad', 2, 3, 34],
+  ['Nautique fuel filter', 'Taller', 'unidad', 2, 3, 34],
   ['Grasa marina', 'Taller', 'tubo', 7, 4, 12],
   ['Parche PVC para inflables', 'Aqua Park', 'kit', 5, 3, 38],
   ['Cloro / tratamiento de agua', 'Instalaciones', 'galón', 11, 8, 27],

@@ -70,7 +70,7 @@ export default function Supplies() {
               variant="outline"
               onClick={() =>
                 downloadCsv(
-                  'suministros-mws.csv',
+                  'supplies-mwc.csv',
                   rows.map((s) => ({
                     SKU: s.sku,
                     Articulo: s.name,
@@ -85,7 +85,7 @@ export default function Supplies() {
                 )
               }
             >
-              <Download className="h-4 w-4" /> Exportar
+              <Download className="h-4 w-4" /> Export
             </Button>
             <Button
               onClick={() => {

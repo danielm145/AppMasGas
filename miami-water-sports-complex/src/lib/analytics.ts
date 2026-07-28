@@ -49,7 +49,8 @@ export function congestion(sessions: RideSession[]) {
     'system-2': 6,
     kicker: 4,
     'aqua-park': 40,
-    boat: 8,
+    wakesurf: 4,
+    tubing: 6,
   };
   const active = sessions.filter((s) => s.status === 'active');
   const byLine = groupBy(active, (s) => s.line);

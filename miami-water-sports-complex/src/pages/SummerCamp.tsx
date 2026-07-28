@@ -188,7 +188,7 @@ export default function SummerCamp() {
               variant="outline"
               onClick={() =>
                 downloadCsv(
-                  'campers-mws.csv',
+                  'campers-mwc.csv',
                   rows.map((c) => ({
                     Codigo: c.camperCode,
                     Nombre: `${c.firstName} ${c.lastName}`,

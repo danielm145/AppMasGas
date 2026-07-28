@@ -10,6 +10,7 @@ import {
 } from 'react';
 import * as seed from '@/data/seed';
 import { addDays, isoDate, pointsMultiplier, tierFor, uid } from './utils';
+import { PACKAGE_META } from './types';
 import type {
   Asset,
   AssetEvent,
@@ -61,7 +62,7 @@ export interface AppState {
   currentUserId: string;
 }
 
-const STORAGE_KEY = 'mws.state.v1';
+const STORAGE_KEY = 'mwc.state.v1';
 
 function initialState(): AppState {
   return {
@@ -314,7 +315,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...input,
           id: uid('cus'),
           createdAt: new Date().toISOString(),
-          memberCode: `MWS-${1000 + state.customers.length}`,
+          memberCode: `MWC-${1000 + state.customers.length}`,
           points: 100,
           lifetimePoints: 100,
           tier: 'splash',
@@ -365,7 +366,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       /* ── Operación de rides ── */
       startSession: ({ customerId, packageType, line, assetIds }) => {
-        const meta = { 'hour-1': [60, 45], 'hour-2': [120, 75], 'half-day': [240, 110], 'full-day': [480, 150], 'season-pass': [480, 0], lesson: [60, 95], 'aqua-park': [60, 30], camp: [480, 85] }[packageType];
+        // Duración y precio salen del catálogo, no de una tabla paralela: así
+        // agregar un paquete nuevo (wakesurf, tubing, cumpleaños…) es un solo cambio.
+        const meta = PACKAGE_META[packageType];
         const customer = state.customers.find((c) => c.id === customerId);
         const session: RideSession = {
           id: uid('ses'),
@@ -374,14 +377,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           packageType,
           line,
           startAt: new Date().toISOString(),
-          minutesPurchased: meta[0],
+          minutesPurchased: meta.minutes,
           lapsCompleted: 0,
           falls: 0,
           assignedAssetIds: assetIds,
           operatorId: currentUser.id,
           status: 'active',
-          amountPaid: meta[1],
-          pointsEarned: Math.round(meta[1] * pointsMultiplier(customer?.tier ?? 'splash')),
+          amountPaid: meta.price,
+          pointsEarned: Math.round(meta.price * pointsMultiplier(customer?.tier ?? 'splash')),
         };
         // Cada pieza entregada queda asentada en su propio historial: así se sabe
         // siempre qué tabla y qué casco tuvo cada cliente y en qué fecha.

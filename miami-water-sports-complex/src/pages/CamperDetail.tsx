@@ -243,7 +243,7 @@ export default function CamperDetail() {
           <Card>
             <CardHeader title="Credencial del camper" subtitle="Escaneable en entrada y salida" />
             <div className="flex justify-center p-5">
-              <QrCode value={`mws://camper/${camper.camperCode}`} label={camper.camperCode} size={140} caption="Agiliza el check-in matutino sin buscar por nombre." />
+              <QrCode value={`mwc://camper/${camper.camperCode}`} label={camper.camperCode} size={140} caption="Agiliza el check-in matutino sin buscar por nombre." />
             </div>
           </Card>
 

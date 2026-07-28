@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, HardHat, RectangleHorizontal, ScanLine, Smartphone, XCircle, Zap } from 'lucide-react';
+import { Camera, CheckCircle2, HardHat, Monitor, RectangleHorizontal, ScanLine, Smartphone, XCircle, Zap } from 'lucide-react';
+import { QrScanner } from '@/components/QrScanner';
+import { QrCode } from '@/components/QrCode';
 import { useStore } from '@/lib/store';
 import { ASSET_CATEGORY_LABELS, LINE_LABELS } from '@/lib/types';
 import { cn, formatTime, relativeTime } from '@/lib/utils';
@@ -19,6 +21,7 @@ import { Avatar, Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader 
 export default function Scanner() {
   const { state, logLap, currentUser } = useStore();
   const [code, setCode] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [feed, setFeed] = useState<{ id: string; ok: boolean; text: string; sub: string; at: string }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +87,11 @@ export default function Scanner() {
             <ScanLine className="relative h-10 w-10 text-lagoon-300" />
           </div>
           <p className="mt-3 text-sm font-semibold text-lagoon-200">Waiting for a helmet scan…</p>
+
+          <Button size="lg" variant="accent" className="mx-auto mt-4 h-16 w-full max-w-md text-lg" onClick={() => setCameraOpen(true)}>
+            <Camera className="h-6 w-6" /> Scan with the camera
+          </Button>
+          <p className="mt-2 text-[11px] text-white/50">or type the code below</p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -110,6 +118,39 @@ export default function Scanner() {
           </p>
         </div>
       </Card>
+
+      <QrScanner
+        open={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onScan={(value) => submit(value)}
+      />
+
+      {/* Para el demo: estos QR se muestran en el portátil y se escanean con el teléfono */}
+      {activeSessions.length > 0 && (
+        <Card className="mb-4">
+          <CardHeader
+            title="Helmet tags on the water right now"
+            subtitle="Open this on a laptop and scan these with the phone — that is exactly what happens on the dock"
+            icon={<Monitor className="h-4 w-4" />}
+          />
+          <div className="flex gap-5 overflow-x-auto p-5">
+            {activeSessions.slice(0, 6).map((s2) => {
+              const gear = state.assets.filter((a) => s2.assignedAssetIds.includes(a.id));
+              const helmet = gear.find((a) => a.category === 'helmet');
+              const rider = state.customers.find((c) => c.id === s2.customerId);
+              if (!helmet) return null;
+              return (
+                <div key={s2.id} className="shrink-0 text-center">
+                  <QrCode value={`mwc://asset/${helmet.code}`} size={120} label={helmet.code} />
+                  <p className="mt-1 max-w-[140px] truncate text-[11px] font-semibold text-slate-600">
+                    {rider?.firstName} {rider?.lastName}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

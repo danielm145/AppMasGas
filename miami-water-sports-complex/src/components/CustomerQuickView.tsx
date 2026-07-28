@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { readImageFile } from '@/lib/images';
 import { useStore } from '@/lib/store';
-import { TIER_META } from '@/lib/types';
+import { MEMBERSHIP_PLANS, TIER_META } from '@/lib/types';
 import { age, cn, formatDate, fullName, num, relativeTime } from '@/lib/utils';
 import { Avatar, Badge, Button, Modal } from './ui';
 
@@ -61,7 +61,7 @@ export function PersonAvatar({
 }
 
 export function CustomerQuickView() {
-  const { state, updateCustomer } = useStore();
+  const { state, updateCustomer, activeMembership } = useStore();
   const [id, setId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export function CustomerQuickView() {
   );
   const session = state.rideSessions.find((s) => s.customerId === customer.id && s.status === 'active');
   const gear = session ? state.assets.filter((a) => session.assignedAssetIds.includes(a.id)) : [];
+  const membership = activeMembership(customer.id);
   const ec = customer.emergencyContact;
   const hasEc = Boolean(ec?.name || ec?.phone);
 
@@ -116,6 +117,11 @@ export function CustomerQuickView() {
               <Mail className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{customer.email}</span>
             </a>
             <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {membership && (
+                <Badge tone="green" dot>
+                  Member
+                </Badge>
+              )}
               <Badge className={TIER_META[customer.tier].color}>{TIER_META[customer.tier].label}</Badge>
               {customer.isMinor && <Badge tone="amber">Minor</Badge>}
             </div>
@@ -157,6 +163,17 @@ export function CustomerQuickView() {
                 {customer.guardianPhone}
               </a>
             )}
+          </div>
+        )}
+
+        {membership && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-emerald-800">Membership</p>
+            <p className="text-sm font-bold text-deep-900">{MEMBERSHIP_PLANS.find((p) => p.id === membership.planId)?.name}</p>
+            <p className="text-xs text-slate-600">
+              Valid through {formatDate(membership.endsAt)}
+              {membership.autoRenew && ' · auto-renews'}
+            </p>
           </div>
         )}
 

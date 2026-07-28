@@ -16,6 +16,7 @@ import {
   tierFor,
   uid,
 } from '@/lib/utils';
+import { MEMBERSHIP_PLANS } from '@/lib/types';
 import type {
   Asset,
   AssetCategory,
@@ -28,6 +29,7 @@ import type {
   Customer,
   Employee,
   MaintenanceTicket,
+  Membership,
   PackageType,
   PointsLedgerEntry,
   PreventivePlan,
@@ -714,6 +716,26 @@ export const campActivities: CampActivity[] = (() => {
 })();
 
 /* ────────────────────────── Lealtad y marketing ─────────────────────────── */
+
+/** Socios activos — la base del ingreso recurrente. */
+export const memberships: Membership[] = customers.slice(0, 14).map((c, i) => {
+  const plan = pick(rng, MEMBERSHIP_PLANS);
+  const starts = addDays(NOW, -between(rng, 1, plan.period === 'annual' ? 300 : 27));
+  const ends = new Date(starts);
+  if (plan.period === 'annual') ends.setFullYear(ends.getFullYear() + 1);
+  else ends.setMonth(ends.getMonth() + 1);
+  return {
+    id: `mem_${i + 1}`,
+    customerId: c.id,
+    planId: plan.id,
+    startsAt: starts.toISOString(),
+    endsAt: ends.toISOString(),
+    status: 'active' as const,
+    autoRenew: rng() < 0.7,
+    pricePaid: plan.price,
+    soldBy: 'emp_10',
+  };
+});
 
 export const rewards: Reward[] = [
   { id: 'rw_1', name: 'Hora de cable gratis', description: '60 minutos en cable completo, cualquier día.', cost: 900, category: 'ride', active: true, redeemed: 84 },

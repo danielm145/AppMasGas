@@ -16,6 +16,7 @@ import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
 import Waivers from './pages/Waivers';
 import Loyalty from './pages/Loyalty';
+import Memberships from './pages/Memberships';
 import Marketing from './pages/Marketing';
 import SummerCamp from './pages/SummerCamp';
 import CamperDetail from './pages/CamperDetail';
@@ -72,6 +73,7 @@ export default function App() {
 
         <Route path="customers" element={<Guard path="/customers"><Customers /></Guard>} />
         <Route path="customers/:id" element={<Guard path="/customers"><CustomerDetail /></Guard>} />
+        <Route path="memberships" element={<Guard path="/memberships"><Memberships /></Guard>} />
         <Route path="waivers" element={<Guard path="/waivers"><Waivers /></Guard>} />
         <Route path="loyalty" element={<Guard path="/loyalty"><Loyalty /></Guard>} />
         <Route path="marketing" element={<Guard path="/marketing"><Marketing /></Guard>} />

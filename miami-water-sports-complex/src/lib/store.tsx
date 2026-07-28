@@ -10,7 +10,7 @@ import {
 } from 'react';
 import * as seed from '@/data/seed';
 import { addDays, isoDate, pointsMultiplier, tierFor, uid } from './utils';
-import { PACKAGE_META } from './types';
+import { MEMBERSHIP_PLANS, PACKAGE_META } from './types';
 import type {
   Asset,
   AssetEvent,
@@ -21,6 +21,7 @@ import type {
   CampSession,
   Customer,
   Employee,
+  Membership,
   QueueEntry,
   MaintenanceTicket,
   Notification,
@@ -45,6 +46,7 @@ export interface AppState {
   assetEvents: AssetEvent[];
   rideSessions: RideSession[];
   queue: QueueEntry[];
+  memberships: Membership[];
   reservations: Reservation[];
   employees: Employee[];
   shifts: Shift[];
@@ -76,6 +78,7 @@ function initialState(): AppState {
     assetEvents: seed.assetEvents,
     rideSessions: seed.rideSessions,
     queue: [],
+    memberships: seed.memberships,
     reservations: seed.reservations,
     employees: seed.employees,
     shifts: seed.shifts,
@@ -243,6 +246,13 @@ interface Store {
   addCamper: (c: Omit<Camper, 'id' | 'camperCode'>) => Camper;
   updateCamper: (id: string, patch: Partial<Camper>) => void;
   markAttendance: (camperId: string, kind: 'in' | 'out', by: string) => void;
+
+  // Membresías
+  addMembership: (input: { customerId: string; planId: string; pricePaid: number; autoRenew: boolean }) => Membership;
+  cancelMembership: (id: string) => void;
+  renewMembership: (id: string) => void;
+  /** La membresía vigente de un cliente, si la tiene. */
+  activeMembership: (customerId: string) => Membership | undefined;
 
   // Rain checks
   issueRainCheck: (input: { customerId: string; packageType: RainCheck['packageType']; minutesOwed: number; reason: string; notes?: string }) => RainCheck;
@@ -622,6 +632,57 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
         toast(kind === 'in' ? 'Check-in recorded' : 'Check-out recorded');
       },
+
+      /* ── Membresías ── */
+      addMembership: ({ customerId, planId, pricePaid, autoRenew }) => {
+        const plan = MEMBERSHIP_PLANS.find((p) => p.id === planId)!;
+        const starts = new Date();
+        const ends = new Date(starts);
+        if (plan.period === 'annual') ends.setFullYear(ends.getFullYear() + 1);
+        else ends.setMonth(ends.getMonth() + 1);
+
+        const membership: Membership = {
+          id: uid('mem'),
+          customerId,
+          planId,
+          startsAt: starts.toISOString(),
+          endsAt: ends.toISOString(),
+          status: 'active',
+          autoRenew,
+          pricePaid,
+          soldBy: currentUser.id,
+        };
+        // Una membresía nueva reemplaza a la anterior en lugar de acumularse:
+        // dos vigentes a la vez solo generan dudas en el mostrador.
+        setState((prev) => ({
+          ...prev,
+          memberships: [
+            membership,
+            ...prev.memberships.map((m) => (m.customerId === customerId && m.status === 'active' ? { ...m, status: 'expired' as const } : m)),
+          ],
+        }));
+        const customer = state.customers.find((c) => c.id === customerId);
+        toast(`${customer?.firstName ?? 'Customer'} is now a member — ${plan.name}`);
+        return membership;
+      },
+      cancelMembership: (id) => {
+        patchIn('memberships', id, { status: 'cancelled', autoRenew: false });
+        toast('Membership cancelled', 'info');
+      },
+      renewMembership: (id) => {
+        const m = state.memberships.find((x) => x.id === id);
+        if (!m) return;
+        const plan = MEMBERSHIP_PLANS.find((p) => p.id === m.planId)!;
+        // Se renueva desde el vencimiento, no desde hoy: el socio no pierde días.
+        const base = new Date(m.endsAt) > new Date() ? new Date(m.endsAt) : new Date();
+        const ends = new Date(base);
+        if (plan.period === 'annual') ends.setFullYear(ends.getFullYear() + 1);
+        else ends.setMonth(ends.getMonth() + 1);
+        patchIn('memberships', id, { endsAt: ends.toISOString(), status: 'active' });
+        toast(`Renewed through ${ends.toLocaleDateString()}`);
+      },
+      activeMembership: (customerId) =>
+        state.memberships.find((m) => m.customerId === customerId && m.status === 'active' && new Date(m.endsAt) > new Date()),
 
       /* ── Rain checks ── */
       issueRainCheck: ({ customerId, packageType, minutesOwed, reason, notes }) => {

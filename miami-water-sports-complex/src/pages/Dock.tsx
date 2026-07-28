@@ -19,7 +19,7 @@ import { Button, Input } from '@/components/ui';
  * efímera, solo existe la gente parada en el muelle en este momento.
  */
 export default function Dock() {
-  const { state, joinQueue, callNext, removeFromQueue, toast } = useStore();
+  const { state, joinQueue, callNext, removeFromQueue, activeMembership, toast } = useStore();
   const [line, setLine] = useState<CableLine>('full-cable');
   const [scanning, setScanning] = useState(false);
   const [manual, setManual] = useState('');
@@ -117,6 +117,11 @@ export default function Dock() {
                 </p>
                 <p className="mt-1 font-mono text-sm font-bold text-lagoon-700">{next.customer?.memberCode}</p>
                 <p className="mt-0.5 text-sm text-slate-500">Waiting {relativeTime(next.joinedAt)}</p>
+                {activeMembership(next.customerId) && (
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-100 px-3 py-1 text-xs font-black uppercase text-emerald-800">
+                    Member
+                  </p>
+                )}
                 {next.lastTurn && (
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-black uppercase text-amber-800">
                     <AlertTriangle className="h-4 w-4" /> Last turn

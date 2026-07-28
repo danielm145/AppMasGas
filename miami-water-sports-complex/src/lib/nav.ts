@@ -5,6 +5,7 @@ import {
   BarChart3,
   Boxes,
   CalendarDays,
+  CreditCard,
   FileSignature,
   Gift,
   LayoutDashboard,
@@ -49,6 +50,7 @@ export const NAV: NavItem[] = [
   { to: '/reservations', label: 'Reservations', icon: CalendarDays, roles: FLOOR, group: 'Operations' },
 
   { to: '/customers', label: 'Customers', icon: Users, roles: [...FLOOR, 'instructor'], group: 'Customers', simple: true, purpose: 'Every customer, how often they come and how much they spend. This is what marketing runs on.' },
+  { to: '/memberships', label: 'Memberships', icon: CreditCard, roles: FLOOR, group: 'Customers', simple: true, purpose: 'Monthly and annual members — the money that comes in whether it rains or not, and who to call before their plan lapses.' },
   { to: '/waivers', label: 'Waivers', icon: FileSignature, roles: FLOOR, group: 'Customers', badgeKey: 'pendingWaivers' },
   { to: '/loyalty', label: 'Loyalty & points', icon: Gift, roles: FLOOR, group: 'Customers' },
   { to: '/marketing', label: 'Marketing & CRM', icon: Megaphone, roles: LEADERSHIP, group: 'Customers' },

@@ -550,6 +550,84 @@ export interface CampActivity {
   capacity: number;
 }
 
+/* ──────────────────────────── Memberships ───────────────────────────────── */
+
+/**
+ * Membresías.
+ *
+ * Es el ingreso que llega esté lloviendo o no, así que el sistema tiene que
+ * responder dos cosas al instante: si esta persona puede pasar sin pagar, y
+ * cuánto dinero recurrente hay vivo este mes.
+ */
+export type MembershipPeriod = 'monthly' | 'annual';
+export type MembershipStatus = 'active' | 'expired' | 'cancelled';
+
+export interface MembershipPlan {
+  id: string;
+  name: string;
+  period: MembershipPeriod;
+  price: number;
+  /** Qué cubre — se lee en el mostrador para saber si hay que cobrar algo. */
+  includes: string[];
+  /** Líneas a las que da acceso sin cobro adicional. */
+  lines: CableLine[];
+  color: string;
+  popular?: boolean;
+}
+
+export interface Membership {
+  id: string;
+  customerId: string;
+  planId: string;
+  startsAt: string;
+  endsAt: string;
+  status: MembershipStatus;
+  autoRenew: boolean;
+  pricePaid: number;
+  soldBy: string;
+  notes?: string;
+}
+
+export const MEMBERSHIP_PLANS: MembershipPlan[] = [
+  {
+    id: 'plan_cable_month',
+    name: 'Unlimited Cable — Monthly',
+    period: 'monthly',
+    price: 199,
+    includes: ['Unlimited cable time', 'Helmet and vest included', 'Aqua park access'],
+    lines: ['full-cable', 'system-2', 'kicker', 'aqua-park'],
+    color: 'bg-lagoon-600',
+    popular: true,
+  },
+  {
+    id: 'plan_cable_year',
+    name: 'Unlimited Cable — Annual',
+    period: 'annual',
+    price: 1899,
+    includes: ['Everything in Monthly', 'Two months free', 'Priority in line'],
+    lines: ['full-cable', 'system-2', 'kicker', 'aqua-park'],
+    color: 'bg-deep-900',
+  },
+  {
+    id: 'plan_aqua_month',
+    name: 'Aqua Park — Monthly',
+    period: 'monthly',
+    price: 79,
+    includes: ['Unlimited aqua park', 'Vest included'],
+    lines: ['aqua-park'],
+    color: 'bg-sunset-500',
+  },
+  {
+    id: 'plan_student_month',
+    name: 'Student — Monthly',
+    period: 'monthly',
+    price: 149,
+    includes: ['Unlimited cable', 'Valid student ID required', 'Weekdays only'],
+    lines: ['full-cable', 'system-2', 'kicker'],
+    color: 'bg-indigo-600',
+  },
+];
+
 /* ───────────────────────────── Rain checks ──────────────────────────────── */
 
 /**

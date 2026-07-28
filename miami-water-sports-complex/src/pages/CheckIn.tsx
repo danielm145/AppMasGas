@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ArrowRight, Camera, Check, FileSignature, ShieldCheck, UserPlus, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Camera, Check, FileSignature, ShieldCheck, UserPlus, X } from 'lucide-react';
 import { QrTag } from '@/components/QrCode';
 import { QrScanner } from '@/components/QrScanner';
 import { readImageFile } from '@/lib/images';
@@ -10,6 +10,7 @@ import { useStore } from '@/lib/store';
 import {
   ASSET_CATEGORY_LABELS,
   LINE_LABELS,
+  MEMBERSHIP_PLANS,
   PACKAGE_META,
   TIER_META,
   type AssetCategory,
@@ -46,7 +47,7 @@ const GEAR_CATEGORIES: AssetCategory[] = ['helmet', 'vest', 'wakeboard', 'kneebo
  * waiver vigente, cobrar el paquete, entregar el equipo y emitir la pulsera QR.
  */
 export default function CheckIn() {
-  const { state, addCustomer, updateCustomer, addWaiver, startSession, toast } = useStore();
+  const { state, addCustomer, updateCustomer, addWaiver, startSession, activeMembership, toast } = useStore();
   const [step, setStep] = useState<Step>('customer');
   const [query, setQuery] = useState('');
   const [customerId, setCustomerId] = useState<string>();
@@ -97,6 +98,8 @@ export default function CheckIn() {
     () => state.assets.filter((a) => a.status === 'available' && GEAR_CATEGORIES.includes(a.category)),
     [state.assets],
   );
+
+  const membership = customerId ? activeMembership(customerId) : undefined;
 
   const assignedGear = useMemo(() => state.assets.filter((a) => gear.includes(a.id)), [state.assets, gear]);
   const assignedHelmet = assignedGear.find((a) => a.category === 'helmet');
@@ -567,14 +570,25 @@ export default function CheckIn() {
               ))}
             </div>
 
-            <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-              Credit card only · No refunds or rainchecks
-            </p>
+            {membership ? (
+              <div className="mt-4 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4">
+                <p className="flex items-center gap-2 text-base font-extrabold text-emerald-800">
+                  <BadgeCheck className="h-5 w-5" /> Member — nothing to charge
+                </p>
+                <p className="mt-0.5 text-xs text-emerald-700">
+                  {MEMBERSHIP_PLANS.find((p) => p.id === membership.planId)?.name} · valid through {formatDate(membership.endsAt)}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                Credit card only · No refunds or rainchecks
+              </p>
+            )}
 
             <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
               <div>
                 <p className="text-xs text-slate-500">Total to charge</p>
-                <p className="text-2xl font-extrabold text-deep-900">{money(PACKAGE_META[packageType].price)}</p>
+                <p className="text-2xl font-extrabold text-deep-900">{membership ? money(0) : money(PACKAGE_META[packageType].price)}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-slate-500">Points they will earn</p>

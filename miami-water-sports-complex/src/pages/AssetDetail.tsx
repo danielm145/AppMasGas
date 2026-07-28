@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowLeft,
+  Camera,
   ClipboardList,
   DollarSign,
   Hammer,
@@ -13,6 +14,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { QrCode } from '@/components/QrCode';
+import { readImageFile } from '@/lib/images';
 import { useStore, useEmployeeName } from '@/lib/store';
 import {
   ASSET_CATEGORY_LABELS,
@@ -88,6 +90,7 @@ export default function AssetDetail() {
   const { id } = useParams();
   const { state, updateAsset, addAssetEvent, addTicket } = useStore();
   const employeeName = useEmployeeName();
+  const photoRef = useRef<HTMLInputElement>(null);
   const [eventOpen, setEventOpen] = useState(false);
   const [ticketOpen, setTicketOpen] = useState(false);
   const [event, setEvent] = useState({ type: 'inspection' as AssetEventType, description: '', cost: 0, photoUrl: undefined as string | undefined });
@@ -163,8 +166,26 @@ export default function AssetDetail() {
         <div className="lg:col-span-2">
           <Card className="mb-5 overflow-hidden">
             <div className="grid sm:grid-cols-[240px_1fr]">
-              <div className="aspect-[4/3] bg-slate-100 sm:aspect-auto">
+              <div className="relative aspect-[4/3] bg-slate-100 sm:aspect-auto">
                 <img src={asset.photoUrl} alt={asset.name} className="h-full w-full object-cover" />
+                <button
+                  onClick={() => photoRef.current?.click()}
+                  className="absolute bottom-3 right-3 flex items-center gap-2 rounded-full bg-white/90 px-4 py-2.5 text-sm font-bold text-deep-900 shadow-card transition hover:bg-white"
+                >
+                  <Camera className="h-4 w-4" /> Update photo
+                </button>
+                <input
+                  ref={photoRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f) updateAsset(asset.id, { photoUrl: await readImageFile(f) });
+                    e.target.value = '';
+                  }}
+                />
               </div>
               <div className="p-5">
                 <div className="flex flex-wrap items-start justify-between gap-2">

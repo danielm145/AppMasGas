@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, HardHat, ScanLine, Smartphone, XCircle, Zap } from 'lucide-react';
+import { CheckCircle2, HardHat, RectangleHorizontal, ScanLine, Smartphone, XCircle, Zap } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { ASSET_CATEGORY_LABELS, LINE_LABELS } from '@/lib/types';
 import { cn, formatTime, relativeTime } from '@/lib/utils';
@@ -134,8 +134,16 @@ export default function Scanner() {
                           {c?.firstName} {c?.lastName}
                         </p>
                         <p className="flex flex-wrap gap-x-2 text-[11px]">
-                          {helmet && <span className="font-mono font-bold text-lagoon-700">🪖 {helmet.code}</span>}
-                          {board && <span className="font-mono font-bold text-indigo-600">🛹 {board.code}</span>}
+                          {helmet && (
+                            <span className="inline-flex items-center gap-1 font-mono font-bold text-lagoon-700">
+                              <HardHat className="h-3 w-3" /> {helmet.code}
+                            </span>
+                          )}
+                          {board && (
+                            <span className="inline-flex items-center gap-1 font-mono font-bold text-indigo-600">
+                              <RectangleHorizontal className="h-3 w-3" /> {board.code}
+                            </span>
+                          )}
                           {!helmet && !board && <span className="font-mono font-bold text-slate-500">{s.wristbandCode}</span>}
                         </p>
                       </div>

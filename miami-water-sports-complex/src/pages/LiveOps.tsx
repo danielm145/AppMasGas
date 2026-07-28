@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CircleStop, Plus, Radio, Timer, TrendingDown, Waves } from 'lucide-react';
+import { CircleStop, HardHat, Plus, Radio, RectangleHorizontal, Timer, TrendingDown, Waves } from 'lucide-react';
 import { congestion } from '@/lib/analytics';
 import { useStore } from '@/lib/store';
 import { LINE_LABELS, PACKAGE_META, type CableLine } from '@/lib/types';
@@ -154,14 +154,14 @@ export default function LiveOps() {
                       <p className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-[11px] font-bold tracking-wider">
                         {helmet ? (
                           <Link to={`/assets/${helmet.id}`} className="text-lagoon-700 hover:underline">
-                            🪖 {helmet.code}
+                            <HardHat className="mr-0.5 inline h-3 w-3" />{helmet.code}
                           </Link>
                         ) : (
                           <span className="text-slate-500">{s.wristbandCode}</span>
                         )}
                         {board && (
                           <Link to={`/assets/${board.id}`} className="text-indigo-600 hover:underline">
-                            🛹 {board.code}
+                            <RectangleHorizontal className="mr-0.5 inline h-3 w-3" />{board.code}
                           </Link>
                         )}
                       </p>

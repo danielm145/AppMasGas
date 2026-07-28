@@ -6,6 +6,7 @@ import {
   Boxes,
   CalendarDays,
   DollarSign,
+  HelpCircle,
   Package,
   Repeat,
   Users,
@@ -28,6 +29,8 @@ import { useStore } from '@/lib/store';
 import { LINE_LABELS, PACKAGE_META, TIER_META } from '@/lib/types';
 import { cn, formatDate, money, num, pct, relativeTime } from '@/lib/utils';
 import { Bars, ChartCard, Heatmap, RankedBars, TrendArea } from '@/components/charts';
+import { openTour } from '@/components/GuidedTour';
+import parkLake from '@/assets/park-lake.jpg';
 import { Avatar, Badge, Button, Card, CardHeader, EmptyState, ProgressBar, StatCard } from '@/components/ui';
 
 export default function Dashboard() {
@@ -54,7 +57,11 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-[1400px]">
       {/* Encabezado con saludo */}
-      <div className="wave-bg mb-6 overflow-hidden rounded-2xl px-6 py-7 text-white shadow-pop">
+      <div className="relative mb-6 overflow-hidden rounded-2xl px-6 py-7 text-white shadow-pop">
+        {/* La foto real del lago, con un velado azul para que el texto respire */}
+        <img src={parkLake} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-deep-950/90 via-deep-950/70 to-deep-900/40" />
+        <div className="relative">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-lagoon-300">
@@ -78,7 +85,11 @@ export default function Dashboard() {
                 Scan a lap
               </Button>
             </Link>
+            <Button variant="outline" onClick={openTour} className="border-white/25 bg-white/10 text-white hover:bg-white/20">
+              <HelpCircle className="h-4 w-4" /> How it works
+            </Button>
           </div>
+        </div>
         </div>
       </div>
 

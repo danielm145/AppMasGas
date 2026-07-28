@@ -26,6 +26,7 @@ import type {
   Notification,
   PointsLedgerEntry,
   PreventivePlan,
+  RainCheck,
   Reservation,
   Reward,
   RideSession,
@@ -54,12 +55,15 @@ export interface AppState {
   campers: Camper[];
   campAttendance: CampAttendance[];
   campActivities: CampActivity[];
+  rainChecks: RainCheck[];
   pointsLedger: PointsLedgerEntry[];
   rewards: Reward[];
   campaigns: Campaign[];
   notifications: Notification[];
   /** Empleado con la sesión iniciada — define qué módulos ve. */
   currentUserId: string;
+  /** Modo simple: solo las ocho pantallas del día a día. Arranca encendido. */
+  simpleMode: boolean;
 }
 
 const STORAGE_KEY = 'mwc.state.v1';
@@ -82,11 +86,13 @@ function initialState(): AppState {
     campers: seed.campers,
     campAttendance: seed.campAttendance,
     campActivities: seed.campActivities,
+    rainChecks: [],
     pointsLedger: seed.pointsLedger,
     rewards: seed.rewards,
     campaigns: seed.campaigns,
     notifications: buildNotifications(seed.tickets, seed.supplies, seed.waivers, seed.preventivePlans, seed.campers),
     currentUserId: 'emp_1',
+    simpleMode: true,
   };
 }
 
@@ -187,6 +193,7 @@ interface Store {
   currentUser: Employee;
   role: Role;
   setCurrentUser: (id: string) => void;
+  setSimpleMode: (v: boolean) => void;
   toasts: Toast[];
   toast: (message: string, tone?: Toast['tone']) => void;
   dismissToast: (id: string) => void;
@@ -227,6 +234,10 @@ interface Store {
   addCamper: (c: Omit<Camper, 'id' | 'camperCode'>) => Camper;
   updateCamper: (id: string, patch: Partial<Camper>) => void;
   markAttendance: (camperId: string, kind: 'in' | 'out', by: string) => void;
+
+  // Rain checks
+  issueRainCheck: (input: { customerId: string; packageType: RainCheck['packageType']; minutesOwed: number; reason: string; notes?: string }) => RainCheck;
+  redeemRainCheck: (id: string) => void;
 
   // Lealtad / marketing
   awardPoints: (customerId: string, points: number, reason: string, type?: PointsLedgerEntry['type']) => void;
@@ -300,6 +311,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       currentUser,
       role: currentUser.role,
       setCurrentUser: (id) => setState((p) => ({ ...p, currentUserId: id })),
+      setSimpleMode: (v) => setState((p) => ({ ...p, simpleMode: v })),
       toasts,
       toast,
       dismissToast,
@@ -586,6 +598,31 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ]);
         }
         toast(kind === 'in' ? 'Check-in registrado' : 'Salida registrada');
+      },
+
+      /* ── Rain checks ── */
+      issueRainCheck: ({ customerId, packageType, minutesOwed, reason, notes }) => {
+        const rc: RainCheck = {
+          id: uid('rc'),
+          code: `RC-${String(1001 + state.rainChecks.length)}`,
+          customerId,
+          issuedAt: new Date().toISOString(),
+          // 60 días de vigencia: suficiente para volver, corto para no acumular pasivo.
+          expiresAt: new Date(Date.now() + 60 * 864e5).toISOString(),
+          reason,
+          packageType,
+          minutesOwed,
+          status: 'issued',
+          issuedBy: currentUser.id,
+          notes,
+        };
+        mutate('rainChecks', (prev) => [rc, ...prev]);
+        toast(`Rain check ${rc.code} issued`);
+        return rc;
+      },
+      redeemRainCheck: (id) => {
+        patchIn('rainChecks', id, { status: 'redeemed', redeemedAt: new Date().toISOString() });
+        toast('Rain check redeemed — open their check-in');
       },
 
       /* ── Lealtad ── */

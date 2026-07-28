@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Bell,
@@ -10,20 +10,23 @@ import {
   Waves,
   X,
 } from 'lucide-react';
-import { BRAND_ICON, GROUP_ORDER, NAV } from '@/lib/nav';
+import { GROUP_ORDER, NAV } from '@/lib/nav';
+import { LogoMark } from './Logo';
 import { useStore } from '@/lib/store';
 import { LANGUAGES, useI18n } from '@/lib/i18n';
 import { ROLE_LABELS } from '@/lib/types';
 import { cn, relativeTime } from '@/lib/utils';
 import { Avatar, Badge } from './ui';
 import { CommandPalette } from './CommandPalette';
+import { GuidedTour, TOUR_EVENT, TourButton } from './GuidedTour';
 
 export function AppShell() {
-  const { state, currentUser, role, setCurrentUser, markAllNotificationsRead, markNotificationRead, resetDemo } = useStore();
+  const { state, currentUser, role, setCurrentUser, setSimpleMode, markAllNotificationsRead, markNotificationRead, resetDemo } = useStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
   const location = useLocation();
   const { lang, setLang, t } = useI18n();
 
@@ -39,18 +42,26 @@ export function AppShell() {
     [state],
   );
 
-  const visibleNav = NAV.filter((n) => n.roles.includes(role));
+  useEffect(() => {
+    const open = () => setTourOpen(true);
+    window.addEventListener(TOUR_EVENT, open);
+    return () => window.removeEventListener(TOUR_EVENT, open);
+  }, []);
+
+  const visibleNav = NAV.filter((n) => n.roles.includes(role)).filter((n) => !state.simpleMode || n.simple);
+  /** Barra inferior del iPhone: las cuatro cosas que se hacen de pie en el muelle. */
+  const phoneTabs = ['/', '/check-in', '/rain-check', '/scanner']
+    .map((to) => NAV.find((n) => n.to === to))
+    .filter((n): n is NonNullable<typeof n> => !!n && n.roles.includes(role));
   const unread = state.notifications.filter((n) => !n.read);
 
   const sidebar = (
     <div className="flex h-full w-64 flex-col bg-deep-950 text-slate-300">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lagoon-500 text-white shadow-lg shadow-lagoon-500/30">
-          <BRAND_ICON className="h-5 w-5" />
-        </span>
+        <LogoMark className="h-10 w-16 shrink-0 text-white" />
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-extrabold leading-tight text-white">Miami Watersports</p>
-          <p className="text-[10px] font-medium uppercase tracking-widest text-lagoon-400">Hialeah · FL</p>
+          <p className="truncate text-[12px] font-extrabold leading-tight text-white">Miami Watersports</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.25em] text-lagoon-400">Complex · Hialeah</p>
         </div>
         <button className="ml-auto text-slate-400 lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Close menu">
           <X className="h-5 w-5" />
@@ -100,6 +111,25 @@ export function AppShell() {
       </nav>
 
       <div className="border-t border-white/10 p-3">
+        <div className="mb-2 rounded-lg bg-white/5 p-1">
+          <div className="flex">
+            {([true, false] as const).map((v) => (
+              <button
+                key={String(v)}
+                onClick={() => setSimpleMode(v)}
+                className={cn(
+                  'flex-1 rounded-md px-2 py-1.5 text-[11px] font-bold transition',
+                  state.simpleMode === v ? 'bg-lagoon-500 text-white' : 'text-slate-400 hover:text-white',
+                )}
+              >
+                {v ? t('Everyday') : t('Everything')}
+              </button>
+            ))}
+          </div>
+          <p className="px-1 pb-0.5 pt-1.5 text-[10px] leading-snug text-slate-500">
+            {state.simpleMode ? t('The eight screens the park uses every day.') : t('All modules, including reports and admin.')}
+          </p>
+        </div>
         <button
           onClick={resetDemo}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
@@ -269,12 +299,34 @@ export function AppShell() {
           </div>
         </header>
 
-        <main key={location.pathname} className="animate-fade-in flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+        <main key={location.pathname} className="animate-fade-in flex-1 overflow-y-auto px-4 pb-24 pt-6 lg:px-8 lg:pb-8">
           <Outlet />
         </main>
+
+        {/* Barra inferior sólo en teléfono: en el muelle se opera con una mano. */}
+        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+          {phoneTabs.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                cn(
+                  'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold transition',
+                  isActive ? 'text-lagoon-700' : 'text-slate-400',
+                )
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="truncate px-1">{t(item.label)}</span>
+            </NavLink>
+          ))}
+        </nav>
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <TourButton onClick={() => setTourOpen(true)} hidden={tourOpen} />
+      <GuidedTour open={tourOpen} onOpenChange={setTourOpen} />
       <Toasts />
     </div>
   );

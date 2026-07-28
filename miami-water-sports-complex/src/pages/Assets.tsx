@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Boxes, Download, LayoutGrid, List, Plus, QrCode, Wrench } from 'lucide-react';
+import { Boxes, Camera, Download, LayoutGrid, List, Plus, QrCode, Wrench } from 'lucide-react';
 import { QrLabelSheet } from '@/components/QrLabelSheet';
-import { assetPhoto } from '@/lib/images';
+import { assetPhoto, readImageFile } from '@/lib/images';
 import { useStore } from '@/lib/store';
 import {
   ASSET_CATEGORY_LABELS,
@@ -371,6 +371,8 @@ export default function Assets() {
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
+  const { updateAsset, toast } = useStore();
+  const fileRef = useRef<HTMLInputElement>(null);
   const serviceDue = asset.nextServiceAt && new Date(asset.nextServiceAt) <= new Date();
   const wear = asset.serviceIntervalHours ? (asset.usageHours % asset.serviceIntervalHours) / asset.serviceIntervalHours : 0;
   return (
@@ -390,6 +392,32 @@ function AssetCard({ asset }: { asset: Asset }) {
             <Badge tone="rose">Service overdue</Badge>
           </span>
         )}
+        {/* Sube la foto real de esta tabla sin salir de la lista */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            fileRef.current?.click();
+          }}
+          className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-deep-900 shadow-card transition hover:bg-white"
+          aria-label={`Upload a photo of ${asset.code}`}
+        >
+          <Camera className="h-5 w-5" />
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="sr-only"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (f) {
+              updateAsset(asset.id, { photoUrl: await readImageFile(f) });
+              toast(`Photo saved on ${asset.code}`);
+            }
+            e.target.value = '';
+          }}
+        />
       </div>
       <div className="flex flex-1 flex-col p-3.5">
         <p className="font-mono text-[10px] font-bold tracking-wider text-slate-400">{asset.code}</p>

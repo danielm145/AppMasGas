@@ -525,6 +525,32 @@ export interface CampActivity {
   capacity: number;
 }
 
+/* ───────────────────────────── Rain checks ──────────────────────────────── */
+
+/**
+ * Cuando cae un rayo el lago se cierra y la gente que ya pagó o estaba en fila
+ * queda esperando. En vez de apuntarlos en papel, se registran aquí: quedan en
+ * la base de clientes, reciben un pase con QR para volver otro día y la lista
+ * completa se exporta en PDF.
+ */
+export type RainCheckStatus = 'issued' | 'redeemed' | 'expired';
+
+export interface RainCheck {
+  id: string;
+  code: string; // RC-0001
+  customerId: string;
+  issuedAt: string;
+  expiresAt: string;
+  reason: string;
+  packageType: PackageType;
+  /** Minutos que le quedaban sin usar cuando se cerró el lago. */
+  minutesOwed: number;
+  status: RainCheckStatus;
+  redeemedAt?: string;
+  issuedBy: string;
+  notes?: string;
+}
+
 /* ───────────────────────── Lealtad, marketing, CRM ──────────────────────── */
 
 export type LedgerType = 'earn' | 'redeem' | 'bonus' | 'expire' | 'adjust';

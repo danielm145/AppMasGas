@@ -15,9 +15,9 @@ import { setFormatLocale } from './utils';
 
 export type Lang = 'en' | 'es';
 
-export const LANGUAGES: { code: Lang; label: string; flag: string }[] = [
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
+export const LANGUAGES: { code: Lang; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'es', label: 'Español' },
 ];
 
 const DICTIONARIES: Record<Lang, Record<string, string>> = { en: {}, es: ES };

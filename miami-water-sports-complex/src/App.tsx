@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import LiveOps from './pages/LiveOps';
 import Scanner from './pages/Scanner';
 import CheckIn from './pages/CheckIn';
+import RainCheck from './pages/RainCheck';
+import SelfRegister from './pages/SelfRegister';
 import Reservations from './pages/Reservations';
 import Customers from './pages/Customers';
 import CustomerDetail from './pages/CustomerDetail';
@@ -46,12 +48,15 @@ function Guard({ path, children }: { path: string; children: ReactElement }) {
 export default function App() {
   return (
     <Routes>
+      {/* Página pública del cliente — sin barra lateral ni sesión */}
+      <Route path="register" element={<SelfRegister />} />
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
 
         <Route path="operations" element={<Guard path="/operations"><LiveOps /></Guard>} />
         <Route path="scanner" element={<Guard path="/scanner"><Scanner /></Guard>} />
         <Route path="check-in" element={<Guard path="/check-in"><CheckIn /></Guard>} />
+        <Route path="rain-check" element={<Guard path="/rain-check"><RainCheck /></Guard>} />
         <Route path="reservations" element={<Guard path="/reservations"><Reservations /></Guard>} />
 
         <Route path="customers" element={<Guard path="/customers"><Customers /></Guard>} />

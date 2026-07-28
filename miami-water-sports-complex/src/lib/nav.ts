@@ -1,5 +1,6 @@
 import {
   Activity,
+  CloudLightning,
   BarChart3,
   Boxes,
   CalendarDays,
@@ -27,6 +28,10 @@ export interface NavItem {
   roles: Role[];
   group: string;
   badgeKey?: 'openTickets' | 'lowStock' | 'activeSessions' | 'pendingWaivers';
+  /** Visible in Simple mode — the eight screens the park uses every day. */
+  simple?: boolean;
+  /** One line explaining what the screen is for, shown in the guided tour. */
+  purpose?: string;
 }
 
 const ALL: Role[] = ['owner', 'manager', 'supervisor', 'operator', 'instructor', 'frontdesk', 'maintenance'];
@@ -34,22 +39,23 @@ const LEADERSHIP: Role[] = ['owner', 'manager'];
 const FLOOR: Role[] = ['owner', 'manager', 'supervisor', 'operator', 'frontdesk'];
 
 export const NAV: NavItem[] = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ALL, group: 'General' },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ALL, group: 'General', simple: true, purpose: 'The whole park at a glance: money, how busy each line is, and anything that needs your attention today.' },
 
-  { to: '/operations', label: 'Live operations', icon: Activity, roles: [...FLOOR, 'instructor'], group: 'Operations', badgeKey: 'activeSessions' },
-  { to: '/scanner', label: 'Lap scanner', icon: ScanLine, roles: [...FLOOR, 'instructor'], group: 'Operations' },
-  { to: '/check-in', label: 'Check-in & gear', icon: LifeBuoy, roles: FLOOR, group: 'Operations' },
+  { to: '/operations', label: 'Live operations', icon: Activity, roles: [...FLOOR, 'instructor'], group: 'Operations', badgeKey: 'activeSessions', simple: true, purpose: 'Who is on the water right now, how much time they have left, and their gear.' },
+  { to: '/scanner', label: 'Lap scanner', icon: ScanLine, roles: [...FLOOR, 'instructor'], group: 'Operations', simple: true, purpose: 'The dock station. Scan the QR on a helmet and the lap is counted.' },
+  { to: '/rain-check', label: 'Lightning hold', icon: CloudLightning, roles: FLOOR, group: 'Operations', simple: true, purpose: 'When the lake closes for weather, the waiting line registers here instead of on paper — passes, PDF list and a self-register QR.' },
+  { to: '/check-in', label: 'Check-in & gear', icon: LifeBuoy, roles: FLOOR, group: 'Operations', simple: true, purpose: 'Everything the front desk does: find the customer, sign the waiver, charge, hand out the helmet and board.' },
   { to: '/reservations', label: 'Reservations', icon: CalendarDays, roles: FLOOR, group: 'Operations' },
 
-  { to: '/customers', label: 'Customers', icon: Users, roles: [...FLOOR, 'instructor'], group: 'Customers' },
+  { to: '/customers', label: 'Customers', icon: Users, roles: [...FLOOR, 'instructor'], group: 'Customers', simple: true, purpose: 'Every customer, how often they come and how much they spend. This is what marketing runs on.' },
   { to: '/waivers', label: 'Waivers', icon: FileSignature, roles: FLOOR, group: 'Customers', badgeKey: 'pendingWaivers' },
   { to: '/loyalty', label: 'Loyalty & points', icon: Gift, roles: FLOOR, group: 'Customers' },
   { to: '/marketing', label: 'Marketing & CRM', icon: Megaphone, roles: LEADERSHIP, group: 'Customers' },
 
-  { to: '/summer-camp', label: 'Summer Camp', icon: Sun, roles: [...FLOOR, 'instructor'], group: 'Programs' },
+  { to: '/summer-camp', label: 'Summer Camp', icon: Sun, roles: [...FLOOR, 'instructor'], group: 'Programs', simple: true, purpose: 'Kids, their allergies, who is allowed to pick them up, and daily attendance.' },
 
-  { to: '/assets', label: 'Assets & inventory', icon: Boxes, roles: [...LEADERSHIP, 'supervisor', 'maintenance', 'operator'], group: 'Resources' },
-  { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ALL, group: 'Resources', badgeKey: 'openTickets' },
+  { to: '/assets', label: 'Assets & inventory', icon: Boxes, roles: [...LEADERSHIP, 'supervisor', 'maintenance', 'operator'], group: 'Resources', simple: true, purpose: 'Every board, helmet, vest and boat with its photo, its cost and its full history.' },
+  { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ALL, group: 'Resources', badgeKey: 'openTickets', simple: true, purpose: 'Anyone reports damage from their phone; you see what is broken and what it cost to fix.' },
   { to: '/supplies', label: 'Supplies', icon: Package, roles: [...LEADERSHIP, 'supervisor', 'maintenance'], group: 'Resources', badgeKey: 'lowStock' },
 
   { to: '/employees', label: 'Employees', icon: Users, roles: LEADERSHIP, group: 'Team' },

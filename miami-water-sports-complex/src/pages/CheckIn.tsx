@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileSignature, ShieldCheck, UserPlus } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Camera, Check, FileSignature, ShieldCheck, UserPlus, X } from 'lucide-react';
 import { QrTag } from '@/components/QrCode';
+import { QrScanner } from '@/components/QrScanner';
 import { SignaturePad } from '@/components/SignaturePad';
 import { useStore } from '@/lib/store';
 import {
@@ -57,6 +58,7 @@ export default function CheckIn() {
   const [line, setLine] = useState<CableLine>('full-cable');
   const [gear, setGear] = useState<string[]>([]);
   const [wristband, setWristband] = useState<string>();
+  const [gearScanner, setGearScanner] = useState(false);
 
   const [draft, setDraft] = useState({
     firstName: '',
@@ -96,6 +98,46 @@ export default function CheckIn() {
 
   const assignedGear = useMemo(() => state.assets.filter((a) => gear.includes(a.id)), [state.assets, gear]);
   const assignedHelmet = assignedGear.find((a) => a.category === 'helmet');
+
+  /**
+   * Un escaneo en el mostrador equivale a tocar la pieza en la lista.
+   *
+   * Se rechaza lo que no se puede entregar —bloqueado por mantenimiento, ya en
+   * manos de otro rider— porque descubrirlo en el muelle cuesta mucho más caro
+   * que descubrirlo aquí.
+   */
+  const handleGearScan = (raw: string) => {
+    const code = raw.trim().replace(/^mwc:\/\/(asset|ride)\//i, '').toUpperCase();
+    const asset = state.assets.find((a) => a.code === code);
+
+    if (!asset) {
+      toast(`No asset with code ${code}`, 'error');
+      return;
+    }
+    if (!GEAR_CATEGORIES.includes(asset.category)) {
+      toast(`${asset.code} is a ${ASSET_CATEGORY_LABELS[asset.category].toLowerCase()}, not rider gear`, 'error');
+      return;
+    }
+    if (gear.includes(asset.id)) {
+      toast(`${asset.code} is already on this check-in`, 'info');
+      return;
+    }
+    if (asset.status === 'maintenance') {
+      toast(`${asset.code} is blocked for maintenance — pick another one`, 'error');
+      return;
+    }
+    if (asset.status === 'in-use') {
+      toast(`${asset.code} is already out with another rider`, 'error');
+      return;
+    }
+    if (asset.status !== 'available') {
+      toast(`${asset.code} is not available`, 'error');
+      return;
+    }
+
+    setGear((g) => [...g, asset.id]);
+    toast(`${ASSET_CATEGORY_LABELS[asset.category]} ${asset.code} added`);
+  };
 
   const reset = () => {
     setStep('customer');
@@ -157,7 +199,7 @@ export default function CheckIn() {
       expiresAt: new Date(Date.now() + 365 * 864e5).toISOString(),
       signerName: isMinor ? customer.guardianName ?? `${customer.firstName} ${customer.lastName}` : `${customer.firstName} ${customer.lastName}`,
       signatureDataUrl: signature,
-      ipAddress: '—  (kiosco recepción)',
+      ipAddress: '— (front desk kiosk)',
       minor: isMinor,
       guardianName: customer.guardianName,
     });
@@ -170,7 +212,7 @@ export default function CheckIn() {
         expiresAt: new Date(Date.now() + 365 * 864e5).toISOString(),
         signerName: `${customer.firstName} ${customer.lastName}`,
         signatureDataUrl: signature,
-        ipAddress: '—  (kiosco recepción)',
+        ipAddress: '— (front desk kiosk)',
         minor: isMinor,
       });
     }
@@ -304,7 +346,7 @@ export default function CheckIn() {
                     </Field>
                     <Field label="Relationship">
                       <Select value={draft.ecRelation} onChange={(e) => setDraft({ ...draft, ecRelation: e.target.value })}>
-                        {['Madre', 'Padre', 'Cónyuge', 'Hermano/a', 'Amigo/a', 'Otro'].map((r) => (
+                        {['Madre', 'Padre', 'Spouse', 'Hermano/a', 'Amigo/a', 'Otro'].map((r) => (
                           <option key={r}>{r}</option>
                         ))}
                       </Select>
@@ -386,22 +428,22 @@ export default function CheckIn() {
             )}
 
             <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-4 text-[12px] leading-relaxed text-slate-600">
-              <p className="mb-2 font-bold text-deep-900">MIAMI WATER SPORTS COMPLEX — ASUNCIÓN DE RIESGO Y EXONERACIÓN</p>
+              <p className="mb-2 font-bold text-deep-900">MIAMI WATERSPORTS COMPLEX — ASSUMPTION OF RISK AND RELEASE</p>
               <p className="mb-2">
-                Reconozco que el wakeboarding por cable, el uso de obstáculos, el parque acuático inflable y las actividades náuticas conllevan riesgos
-                inherentes de lesión grave o muerte, incluyendo colisiones, caídas, ahogamiento y condiciones climáticas adversas.
+                I acknowledge that cable wakeboarding, the use of obstacles, the inflatable aqua park and boat activities carry inherent risks of serious
+                injury or death, including collisions, falls, drowning and adverse weather.
               </p>
               <p className="mb-2">
-                Declaro estar en condiciones físicas adecuadas, saber nadar o aceptar el uso obligatorio de chaleco salvavidas, y me comprometo a usar
-                casco y chaleco durante toda la actividad, así como a seguir las instrucciones del personal.
+                I declare that I am in adequate physical condition, that I know how to swim or accept the mandatory use of a life vest, and that I will wear
+                a helmet and vest for the entire activity and follow staff instructions at all times.
               </p>
               <p className="mb-2">
-                Libero de toda responsabilidad a Miami Watersports Complex, sus propietarios, empleados y aseguradoras por cualquier daño derivado de mi
-                participación, salvo en casos de negligencia grave comprobada.
+                I release Miami Watersports Complex, its owners, employees and insurers from all liability for any harm arising from my participation,
+                except in cases of proven gross negligence.
               </p>
               <p>
-                Autorizo la atención médica de emergencia en caso necesario y me hago responsable de los costos asociados. Esta exoneración tiene vigencia
-                de 12 meses desde la firma.
+                I authorize emergency medical care if needed and accept responsibility for the associated costs. This release is valid for 12 months from
+                the date of signature.
               </p>
             </div>
 
@@ -521,9 +563,36 @@ export default function CheckIn() {
         <Card>
           <CardHeader
             title="Gear handout"
-            subtitle="Every item has a permanent QR: the helmet’s identifies the rider on the dock and the board’s traces who took it"
+            subtitle="Scan the tag on each item, or tap it in the list below. The helmet identifies the rider on the dock; the board traces who took it."
           />
           <div className="p-5">
+            <Button size="lg" variant="accent" className="mb-4 h-16 w-full text-lg" onClick={() => setGearScanner(true)}>
+              <Camera className="h-6 w-6" /> Scan the gear
+            </Button>
+
+            {assignedGear.length > 0 && (
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+                  On this check-in — {assignedGear.length} {assignedGear.length === 1 ? 'item' : 'items'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {assignedGear.map((a) => (
+                    <span key={a.id} className="inline-flex items-center gap-2 rounded-lg border border-lagoon-300 bg-white py-1.5 pl-2.5 pr-1.5">
+                      <span className="font-mono text-xs font-bold text-lagoon-700">{a.code}</span>
+                      <span className="text-[11px] text-slate-500">{ASSET_CATEGORY_LABELS[a.category]}</span>
+                      <button
+                        onClick={() => setGear((g) => g.filter((x) => x !== a.id))}
+                        className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-rose-600"
+                        aria-label={`Remove ${a.code}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {!assignedHelmet ? (
               <p className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[12px] text-amber-900">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -578,12 +647,14 @@ export default function CheckIn() {
                 <ArrowLeft className="h-4 w-4" /> Back
               </Button>
               <Button onClick={finish} size="lg" disabled={!assignedHelmet}>
-                {assignedHelmet ? 'Ligar equipo y abrir sesión' : 'Asigna un casco para continuar'} <ArrowRight className="h-4 w-4" />
+                {assignedHelmet ? 'Link the gear and open the session' : 'Assign a helmet to continue'} <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </Card>
       )}
+
+      <QrScanner open={gearScanner} onClose={() => setGearScanner(false)} onScan={handleGearScan} />
 
       {/* Paso 5 — pulsera */}
       {step === 'done' && wristband && customer && (

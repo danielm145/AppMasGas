@@ -182,7 +182,7 @@ const ASSET_BLUEPRINT: Array<[AssetCategory, string, string, string[], number, n
   ['wakeboard', 'Hyperlite', 'BRD', ['134cm', '138cm', '142cm', '146cm'], 520, 22],
   ['wakeboard', 'Liquid Force', 'BRD', ['136cm', '140cm', '144cm'], 480, 10],
   ['wakeskate', 'Hyperlite', 'SKT', ['41"', '43"'], 340, 6],
-  ['kneeboard', 'O’Brien', 'KNB', ['Único'], 260, 6],
+  ['kneeboard', 'O’Brien', 'KNB', ['One size'], 260, 6],
   ['helmet', 'Slam', 'HLM', ['S', 'M', 'L', 'XL'], 65, 26],
   ['vest', 'Follow', 'VST', ['XS', 'S', 'M', 'L', 'XL'], 90, 30],
   ['boat', 'Nautique', 'BOT', ['G23', 'GS22'], 62000, 2],

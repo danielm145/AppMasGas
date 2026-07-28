@@ -52,7 +52,7 @@ export const NAV: NavItem[] = [
   { to: '/loyalty', label: 'Loyalty & points', icon: Gift, roles: FLOOR, group: 'Customers' },
   { to: '/marketing', label: 'Marketing & CRM', icon: Megaphone, roles: LEADERSHIP, group: 'Customers' },
 
-  { to: '/summer-camp', label: 'Summer Camp', icon: Sun, roles: [...FLOOR, 'instructor'], group: 'Programs', simple: true, purpose: 'Kids, their allergies, who is allowed to pick them up, and daily attendance.' },
+  { to: '/summer-camp', label: 'Summer Camp', icon: Sun, roles: [...FLOOR, 'instructor'], group: 'Programs', purpose: 'Kids, their allergies, who is allowed to pick them up, and daily attendance.' },
 
   { to: '/assets', label: 'Assets & inventory', icon: Boxes, roles: [...LEADERSHIP, 'supervisor', 'maintenance', 'operator'], group: 'Resources', simple: true, purpose: 'Every board, helmet, vest and boat with its photo, its cost and its full history.' },
   { to: '/maintenance', label: 'Maintenance', icon: Wrench, roles: ALL, group: 'Resources', badgeKey: 'openTickets', simple: true, purpose: 'Anyone reports damage from their phone; you see what is broken and what it cost to fix.' },

@@ -59,12 +59,6 @@ const STEPS: Step[] = [
     action: 'Open customers',
   },
   {
-    to: '/summer-camp',
-    title: 'Summer Camp',
-    body: 'Every kid with their allergies, their doctor, who is allowed to pick them up, and daily check-in and check-out. A counselor can pull it up on a phone at the dock.',
-    action: 'Open Summer Camp',
-  },
-  {
     to: '/',
     title: 'And you see all of it',
     body: 'Money, busiest hours, which day fills up, which package sells, what is broken and what is running low. Everything here came from the scans your team already does.',

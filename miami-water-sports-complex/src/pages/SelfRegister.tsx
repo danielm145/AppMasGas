@@ -3,6 +3,8 @@ import { Camera, Check, ChevronRight, PartyPopper } from 'lucide-react';
 import { QrCode } from '@/components/QrCode';
 import { LogoLockup } from '@/components/Logo';
 import { readImageFile } from '@/lib/images';
+import { cloudSaveSignup } from '@/lib/cloud';
+import { PACKAGE_META } from '@/lib/types';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { Button, Checkbox, Field, Input } from '@/components/ui';
@@ -47,6 +49,19 @@ export default function SelfRegister() {
       tags: ['self-registered'],
     });
     const rc = issueRainCheck({ customerId: customer.id, packageType: 'hour-1', minutesOwed: 60, reason: 'Lightning closure — self registered' });
+    void cloudSaveSignup({
+      first_name: firstName,
+      last_name: lastName || '',
+      phone,
+      email: email || null,
+      photo_url: photo ?? null,
+      can_swim: true,
+      pass_code: rc.code,
+      package_label: PACKAGE_META['hour-1'].label,
+      minutes_owed: 60,
+      reason: 'Lightning closure — self registered',
+      status: 'issued',
+    });
     setDone({ code: rc.code, name: firstName });
   };
 

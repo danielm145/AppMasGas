@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CloudLightning, FileDown, Printer, QrCode as QrIcon, UserPlus, Zap } from 'lucide-react';
 import { QrCode } from '@/components/QrCode';
 import { LogoLockup } from '@/components/Logo';
 import { readImageFile } from '@/lib/images';
+import { cloudListSignups, cloudRedeem, cloudSaveSignup, isCloudEnabled } from '@/lib/cloud';
 import { useStore } from '@/lib/store';
 import { PACKAGE_META, type PackageType } from '@/lib/types';
 import { cn, formatDate, formatTime, fullName } from '@/lib/utils';
@@ -25,6 +26,24 @@ export default function RainCheck() {
   const [draft, setDraft] = useState({ firstName: '', lastName: '', phone: '', email: '', packageType: 'hour-1' as PackageType, minutesOwed: 60 });
   const fileRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
+  const [cloudRows, setCloudRows] = useState<Awaited<ReturnType<typeof cloudListSignups>>>([]);
+
+  // Con la nube encendida, la gente que se registra desde su propio teléfono
+  // aparece aquí sola. Cinco segundos es suficiente para el ritmo del mostrador.
+  useEffect(() => {
+    if (!isCloudEnabled()) return;
+    let alive = true;
+    const pull = async () => {
+      const rows = await cloudListSignups();
+      if (alive) setCloudRows(rows);
+    };
+    pull();
+    const timer = window.setInterval(pull, 5000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const holds = useMemo(
     () =>
@@ -59,7 +78,20 @@ export default function RainCheck() {
       smsOptIn: true,
       tags: ['rain-check'],
     });
-    issueRainCheck({ customerId: customer.id, packageType: draft.packageType, minutesOwed: draft.minutesOwed, reason: 'Lightning closure' });
+    const rc = issueRainCheck({ customerId: customer.id, packageType: draft.packageType, minutesOwed: draft.minutesOwed, reason: 'Lightning closure' });
+    void cloudSaveSignup({
+      first_name: draft.firstName,
+      last_name: draft.lastName || '',
+      phone: draft.phone,
+      email: draft.email || null,
+      photo_url: photo ?? null,
+      can_swim: true,
+      pass_code: rc.code,
+      package_label: PACKAGE_META[draft.packageType].label,
+      minutes_owed: draft.minutesOwed,
+      reason: 'Lightning closure',
+      status: 'issued',
+    });
     setDraft({ firstName: '', lastName: '', phone: '', email: '', packageType: draft.packageType, minutesOwed: draft.minutesOwed });
     setPhoto(undefined);
     nameRef.current?.focus();
@@ -81,6 +113,18 @@ export default function RainCheck() {
           </>
         }
       />
+
+      <div
+        className={cn(
+          'mb-5 flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-xs font-semibold print:hidden',
+          isCloudEnabled() ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800',
+        )}
+      >
+        <span className={cn('h-2 w-2 rounded-full', isCloudEnabled() ? 'bg-emerald-500' : 'bg-amber-500')} />
+        {isCloudEnabled()
+          ? `Connected — ${cloudRows.length} sign-ups synced across every device.`
+          : 'Demo mode — this device only. Add the Supabase keys to sync phones and the front desk.'}
+      </div>
 
       {/* Registro rápido — una persona cada pocos segundos */}
       <Card className="mb-5 border-lagoon-300 print:hidden">
@@ -186,7 +230,14 @@ export default function RainCheck() {
                 </div>
                 <span className="font-mono text-lg font-black tracking-wider text-lagoon-700">{h.code}</span>
                 {h.status === 'issued' ? (
-                  <Button size="lg" onClick={() => redeemRainCheck(h.id)} className="print:hidden">
+                  <Button
+                    size="lg"
+                    onClick={() => {
+                      redeemRainCheck(h.id);
+                      void cloudRedeem(h.code);
+                    }}
+                    className="print:hidden"
+                  >
                     Redeem
                   </Button>
                 ) : (

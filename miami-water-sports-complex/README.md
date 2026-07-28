@@ -153,3 +153,39 @@ themselves quickly:
 8. **Membership / season-pass billing** with recurring charges.
 9. **Group and corporate events** module with quotes and deposits.
 10. **Parent portal** for Summer Camp: daily photos, attendance and balance.
+
+## Going live in 30 minutes
+
+The app works offline against `localStorage`. To let customers register from
+their own phone and land at the front desk, add a database and a public URL.
+
+### 1. Supabase — the database
+
+1. Create a free project at supabase.com (region `us-east-1`).
+2. SQL Editor → paste `supabase/schema.sql` → **Run**. That creates the
+   `signups` table with its indexes and policies.
+3. Project Settings → API → copy the **Project URL** and the **anon public** key.
+
+### 2. Cloudflare Pages — the public URL
+
+1. Workers & Pages → Create → Pages → **Connect to Git** → pick this repo.
+2. Build command `npm run build`, output directory `dist`.
+3. Environment variables:
+   - `VITE_SUPABASE_URL` — the Project URL from step 1
+   - `VITE_SUPABASE_ANON_KEY` — the anon public key
+4. Deploy. You get `something.pages.dev`; add
+   `app.miamiwatersportscomplex.com` as a custom domain when ready.
+
+`public/_redirects` is already in the repo so every route serves `index.html` —
+without it the `/register` link behind the QR would 404.
+
+Once deployed, the banner on **Lightning hold** turns green and says how many
+sign-ups are synced. That green banner is the proof that phones and the front
+desk are talking to each other.
+
+### What the anon key can and cannot do
+
+The anon key can insert and read rows in `signups` — nothing else. That is the
+minimum the self-registration page needs. Before this handles real volume, move
+the writes behind a Supabase Edge Function with rate limiting and drop the
+anonymous policies; the schema file notes where.

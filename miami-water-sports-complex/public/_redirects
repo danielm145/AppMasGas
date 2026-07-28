@@ -1,0 +1,4 @@
+# Cloudflare Pages: la app es una SPA, así que cualquier ruta debe servir
+# index.html y dejar que el router del navegador resuelva. Sin esto,
+# /register (el QR que escanean los clientes) devolvería 404.
+/*  /index.html  200

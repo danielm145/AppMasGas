@@ -15,7 +15,8 @@ export type Role =
   | 'operator'
   | 'instructor'
   | 'frontdesk'
-  | 'maintenance';
+  | 'maintenance'
+  | 'dock';
 
 export const ROLE_LABELS: Record<Role, string> = {
   owner: 'Owner',
@@ -25,6 +26,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   instructor: 'Instructor',
   frontdesk: 'Front desk',
   maintenance: 'Maintenance',
+  dock: 'Dock staff',
 };
 
 export interface EmergencyContact {

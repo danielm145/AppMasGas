@@ -1,5 +1,6 @@
 import {
   Activity,
+  Anchor,
   CloudLightning,
   BarChart3,
   Boxes,
@@ -35,10 +36,13 @@ export interface NavItem {
 }
 
 const ALL: Role[] = ['owner', 'manager', 'supervisor', 'operator', 'instructor', 'frontdesk', 'maintenance'];
+/** El muelle ve una sola pantalla; leadership la ve para poder revisarla. */
+const DOCK: Role[] = ['dock', 'owner', 'manager'];
 const LEADERSHIP: Role[] = ['owner', 'manager'];
 const FLOOR: Role[] = ['owner', 'manager', 'supervisor', 'operator', 'frontdesk'];
 
 export const NAV: NavItem[] = [
+  { to: '/dock', label: 'Dock', icon: Anchor, roles: DOCK, group: 'General', simple: true, purpose: 'The whole job for someone standing at the water: count a lap, add a new customer. Nothing else on screen.' },
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ALL, group: 'General', simple: true, purpose: 'The whole park at a glance: money, how busy each line is, and anything that needs your attention today.' },
 
   { to: '/operations', label: 'Live operations', icon: Activity, roles: [...FLOOR, 'instructor'], group: 'Operations', badgeKey: 'activeSessions', simple: true, purpose: 'Who is on the water right now, how much time they have left, and their gear.' },

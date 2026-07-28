@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import LiveOps from './pages/LiveOps';
 import Scanner from './pages/Scanner';
 import CheckIn from './pages/CheckIn';
+import Dock from './pages/Dock';
 import RainCheck from './pages/RainCheck';
 import SelfRegister from './pages/SelfRegister';
 import Reservations from './pages/Reservations';
@@ -45,13 +46,23 @@ function Guard({ path, children }: { path: string; children: ReactElement }) {
   return children;
 }
 
+/**
+ * El personal de muelle no tiene nada que hacer en el dashboard, así que su
+ * pantalla de inicio es el muelle.
+ */
+function Home() {
+  const { role } = useStore();
+  return role === 'dock' ? <Navigate to="/dock" replace /> : <Dashboard />;
+}
+
 export default function App() {
   return (
     <Routes>
       {/* Página pública del cliente — sin barra lateral ni sesión */}
       <Route path="register" element={<SelfRegister />} />
       <Route element={<AppShell />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<Home />} />
+        <Route path="dock" element={<Guard path="/dock"><Dock /></Guard>} />
 
         <Route path="operations" element={<Guard path="/operations"><LiveOps /></Guard>} />
         <Route path="scanner" element={<Guard path="/scanner"><Scanner /></Guard>} />

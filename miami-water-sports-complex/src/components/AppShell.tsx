@@ -51,7 +51,7 @@ export function AppShell() {
 
   const visibleNav = NAV.filter((n) => n.roles.includes(role)).filter((n) => !state.simpleMode || n.simple);
   /** Barra inferior del iPhone: las cuatro cosas que se hacen de pie en el muelle. */
-  const phoneTabs = ['/', '/check-in', '/rain-check', '/scanner']
+  const phoneTabs = (role === 'dock' ? ['/dock'] : ['/', '/check-in', '/rain-check', '/scanner'])
     .map((to) => NAV.find((n) => n.to === to))
     .filter((n): n is NonNullable<typeof n> => !!n && n.roles.includes(role));
   const unread = state.notifications.filter((n) => !n.read);
@@ -112,6 +112,7 @@ export function AppShell() {
       </nav>
 
       <div className="border-t border-white/10 p-3">
+        {role !== 'dock' && (
         <div className="mb-2 rounded-lg bg-white/5 p-1">
           <div className="flex">
             {([true, false] as const).map((v) => (
@@ -131,6 +132,7 @@ export function AppShell() {
             {state.simpleMode ? t('The eight screens the park uses every day.') : t('All modules, including reports and admin.')}
           </p>
         </div>
+        )}
         <button
           onClick={resetDemo}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
@@ -161,6 +163,7 @@ export function AppShell() {
             <Menu className="h-5 w-5" />
           </button>
 
+          {role !== 'dock' && (
           <button
             onClick={() => setPaletteOpen(true)}
             className="flex h-9 flex-1 max-w-md items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 text-left text-sm text-slate-400 transition hover:border-slate-300 hover:bg-white"
@@ -169,6 +172,7 @@ export function AppShell() {
             <span className="flex-1 truncate">{t('Search customer, asset, ticket…')}</span>
             <kbd className="hidden rounded border border-slate-200 bg-white px-1.5 py-0.5 font-sans text-[10px] font-semibold text-slate-500 sm:block">⌘K</kbd>
           </button>
+          )}
 
           <div className="ml-auto flex items-center gap-1.5">
             {/* Idioma — inglés es el idioma base del sistema */}
@@ -188,6 +192,7 @@ export function AppShell() {
               ))}
             </div>
             {/* Notifications */}
+            {role !== 'dock' && (
             <div className="relative">
               <button
                 onClick={() => {
@@ -244,6 +249,7 @@ export function AppShell() {
                 </>
               )}
             </div>
+            )}
 
             {/* Selector de usuario / rol */}
             <div className="relative">
@@ -300,12 +306,21 @@ export function AppShell() {
           </div>
         </header>
 
-        <main key={location.pathname} className="animate-fade-in flex-1 overflow-y-auto px-4 pb-24 pt-6 lg:px-8 lg:pb-8">
+        <main
+          key={location.pathname}
+          className={cn(
+            'animate-fade-in flex-1 overflow-y-auto px-4 pt-6 lg:px-8 lg:pb-8',
+            phoneTabs.length > 1 ? 'pb-24' : 'pb-8',
+          )}
+        >
           <Outlet />
         </main>
 
         {/* Barra inferior sólo en teléfono: en el muelle se opera con una mano. */}
-        <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        <nav className={cn(
+          'fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden',
+          phoneTabs.length > 1 ? 'flex' : 'hidden',
+        )}>
           {phoneTabs.map((item) => (
             <NavLink
               key={item.to}
@@ -327,7 +342,7 @@ export function AppShell() {
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <CustomerQuickView />
-      <TourButton onClick={() => setTourOpen(true)} hidden={tourOpen} />
+      <TourButton onClick={() => setTourOpen(true)} hidden={tourOpen || role === 'dock'} />
       <GuidedTour open={tourOpen} onOpenChange={setTourOpen} />
       <Toasts />
     </div>

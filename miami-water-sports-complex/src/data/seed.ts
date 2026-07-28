@@ -78,6 +78,7 @@ const EMPLOYEE_SEED: Array<[string, string, Employee['role'], number, string]> =
   ['Alexa', 'Ferrer', 'frontdesk', 17, '2023-01-09'],
   ['Bryan', 'Solís', 'frontdesk', 16, '2024-05-06'],
   ['Héctor', 'Villalobos', 'maintenance', 24, '2019-09-23'],
+  ['Luis', 'Fonseca', 'dock', 17, '2025-04-01'],
 ];
 
 const CERTS = [

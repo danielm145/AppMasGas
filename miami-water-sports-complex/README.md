@@ -53,6 +53,27 @@ This is the core of the operation and it drives most of the data in the system.
 Label specification and the full flow are documented in-app under
 **Settings → QR codes**. Printable label sheets: **Assets → QR labels**.
 
+## Front-desk rules the system enforces
+
+Taken from the signage at the counter, because these are the rules that
+actually block a sale:
+
+- **"Must know how to swim."** The customer must declare it before a session
+  can be opened. Check-in refuses to continue without it, and an existing
+  customer who never declared it gets a red block on the package step.
+- **"Please have your ID ready."** Photo-ID verification is recorded with the
+  customer, so the waiver has something to stand on.
+- **Credit card only · No refunds or rainchecks.** Shown at the point where the
+  price is charged, not buried in settings.
+- **Paid parking Fri–Sun and holidays** (county lot) — carried on the booking
+  confirmation.
+
+All four are toggles under **Settings → Park**, since policy changes with the
+season.
+
+AEDs and the Cintas first-aid cabinets are registered as safety assets with
+their own preventive check (battery, pads, expiry dates, service log).
+
 ## Modules
 
 | Module | What it does |

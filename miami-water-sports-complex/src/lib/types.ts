@@ -36,6 +36,12 @@ export interface EmergencyContact {
 /* ──────────────────────────────── Clientes ──────────────────────────────── */
 
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'pro';
+
+/**
+ * El cartel del mostrador es explícito: "MUST KNOW HOW TO SWIM." No es un dato
+ * de perfil, es una condición de entrada al agua que recepción debe confirmar.
+ */
+export type SwimDeclaration = 'declared' | 'refused' | 'pending';
 export type LoyaltyTier = 'splash' | 'rider' | 'pro' | 'legend';
 
 export const TIER_META: Record<
@@ -85,6 +91,10 @@ export interface Customer {
   isMinor: boolean;
   guardianName?: string;
   guardianPhone?: string;
+  /** Declaración de que sabe nadar — obligatoria para entrar al agua. */
+  canSwim: SwimDeclaration;
+  /** Recepción verificó una identificación con foto ("PLEASE HAVE YOUR ID READY"). */
+  idVerified: boolean;
   marketingOptIn: boolean;
   smsOptIn: boolean;
   points: number;
@@ -139,6 +149,7 @@ export type AssetCategory =
   | 'obstacle'
   | 'cable-system'
   | 'inflatable'
+  | 'safety'
   | 'other';
 
 export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
@@ -151,6 +162,7 @@ export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
   obstacle: 'Obstacle / kicker',
   'cable-system': 'Cable system',
   inflatable: 'Inflatable (aqua park)',
+  safety: 'Safety equipment',
   other: 'Other',
 };
 

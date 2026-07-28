@@ -45,7 +45,7 @@ const GEAR_CATEGORIES: AssetCategory[] = ['helmet', 'vest', 'wakeboard', 'kneebo
  * waiver vigente, cobrar el paquete, entregar el equipo y emitir la pulsera QR.
  */
 export default function CheckIn() {
-  const { state, addCustomer, addWaiver, startSession, toast } = useStore();
+  const { state, addCustomer, updateCustomer, addWaiver, startSession, toast } = useStore();
   const [step, setStep] = useState<Step>('customer');
   const [query, setQuery] = useState('');
   const [customerId, setCustomerId] = useState<string>();
@@ -71,6 +71,8 @@ export default function CheckIn() {
     ecRelation: 'Madre',
     guardianName: '',
     guardianPhone: '',
+    canSwim: false,
+    idVerified: false,
     marketingOptIn: true,
     smsOptIn: true,
   });
@@ -111,6 +113,10 @@ export default function CheckIn() {
       toast('First name, last name and email are required', 'error');
       return;
     }
+    if (!draft.canSwim) {
+      toast('The customer must declare they know how to swim', 'error');
+      return;
+    }
     const minor = draft.dob ? age(draft.dob) < 18 : false;
     const c = addCustomer({
       firstName: draft.firstName,
@@ -126,6 +132,8 @@ export default function CheckIn() {
       isMinor: minor,
       guardianName: minor ? draft.guardianName : undefined,
       guardianPhone: minor ? draft.guardianPhone : undefined,
+      canSwim: draft.canSwim ? 'declared' : 'pending',
+      idVerified: draft.idVerified,
       marketingOptIn: draft.marketingOptIn,
       smsOptIn: draft.smsOptIn,
       tags: [],
@@ -323,6 +331,24 @@ export default function CheckIn() {
                   </div>
                 )}
 
+                <div className="rounded-xl border-2 border-deep-900 bg-slate-50 p-4 sm:col-span-2">
+                  <p className="mb-2.5 text-xs font-black uppercase tracking-wide text-deep-900">Must know how to swim</p>
+                  <div className="space-y-2">
+                    <Checkbox
+                      label="The customer declares they know how to swim"
+                      hint="Park rule — nobody enters the water without this declaration"
+                      checked={draft.canSwim}
+                      onChange={(v) => setDraft({ ...draft, canSwim: v })}
+                    />
+                    <Checkbox
+                      label="Photo ID checked at the counter"
+                      hint="“Please have your ID ready” — required for the waiver to hold up"
+                      checked={draft.idVerified}
+                      onChange={(v) => setDraft({ ...draft, idVerified: v })}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2 sm:col-span-2">
                   <Checkbox
                     label="I agree to receive promotions by email"
@@ -405,6 +431,21 @@ export default function CheckIn() {
         </Card>
       )}
 
+      {/* Bloqueo de seguridad: ningún cliente entra al agua sin declarar que sabe nadar */}
+      {step === 'package' && customer && customer.canSwim !== 'declared' && (
+        <Card className="mb-4 border-rose-300 bg-rose-50">
+          <div className="flex flex-wrap items-center gap-3 p-4">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
+            <p className="flex-1 text-sm font-semibold text-rose-900">
+              {customer.firstName} has not declared they know how to swim. Park rule: they cannot enter the water.
+            </p>
+            <Button size="sm" onClick={() => updateCustomer(customer.id, { canSwim: 'declared' })}>
+              They declare it now
+            </Button>
+          </div>
+        </Card>
+      )}
+
       {/* Paso 3 — paquete */}
       {step === 'package' && customer && (
         <Card>
@@ -446,7 +487,11 @@ export default function CheckIn() {
               ))}
             </div>
 
-            <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
+            <p className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+              Credit card only · No refunds or rainchecks
+            </p>
+
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3">
               <div>
                 <p className="text-xs text-slate-500">Total to charge</p>
                 <p className="text-2xl font-extrabold text-deep-900">{money(PACKAGE_META[packageType].price)}</p>

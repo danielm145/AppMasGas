@@ -141,6 +141,8 @@ export const customers: Customer[] = Array.from({ length: 64 }, (_, i) => {
     isMinor: minor,
     guardianName: minor ? `${pick(rng, FIRST)} ${lastName}` : undefined,
     guardianPhone: minor ? phone() : undefined,
+    canSwim: rng() < 0.94 ? ('declared' as const) : ('pending' as const),
+    idVerified: rng() < 0.9,
     marketingOptIn: rng() < 0.78,
     smsOptIn: rng() < 0.55,
     points: Math.round(lifetimePoints * (0.2 + rng() * 0.6)),
@@ -187,7 +189,9 @@ const ASSET_BLUEPRINT: Array<[AssetCategory, string, string, string[], number, n
   ['boat', 'Nautique', 'BOT', ['Sport 200'], 38000, 1],
   ['obstacle', 'Unit Parktech', 'OBS', ['Kicker', 'Rail 30ft', 'A-Frame', 'Double-up kicker'], 7800, 5],
   ['cable-system', 'Sesitec', 'CBL', ['System 2.0', 'Full Cable'], 145000, 2],
-  ['inflatable', 'Wibit', 'INF', ['Módulo'], 4200, 9],
+  ['inflatable', 'Wibit', 'INF', ['Module'], 4200, 9],
+  ['safety', 'Zoll', 'AED', ['AED Plus'], 2100, 2],
+  ['safety', 'Cintas', 'FAK', ['First aid cabinet'], 380, 3],
 ];
 
 const LOCATIONS = ['Pro Shop', 'Main storage', 'Cable dock', 'Boat dock', 'Workshop', 'Aqua park'];
@@ -500,6 +504,16 @@ export const tickets: MaintenanceTicket[] = TICKET_SEED.map(([title, description
   };
 });
 
+/** Reglas fijas que recepción repite todo el día — viven en Configuración. */
+export const parkPolicies = {
+  mustKnowHowToSwim: true,
+  creditCardOnly: true,
+  noRefundsOrRainchecks: true,
+  photoIdRequired: true,
+  paidParkingNotice: 'Paid parking Fri–Sun and holidays (county park lot).',
+  reviewIncentive: 'Free sticker for a Google review or a follow on TikTok / Instagram / Facebook.',
+};
+
 export const preventivePlans: PreventivePlan[] = [
   {
     id: 'pp_1',
@@ -563,14 +577,14 @@ export const preventivePlans: PreventivePlan[] = [
   },
   {
     id: 'pp_6',
-    name: 'Prueba de botiquines y desfibrilador',
-    target: { kind: 'area', area: 'Instalaciones' },
+    name: 'AED and first-aid cabinet check',
+    target: { kind: 'category', category: 'safety' },
     frequencyValue: 1,
     frequencyUnit: 'months',
     lastDoneAt: isoDate(addDays(NOW, -28)),
     nextDueAt: isoDate(addDays(NOW, 2)),
     assignedRole: 'manager',
-    checklist: ['Insumos completos', 'Fechas de vencimiento', 'Batería del AED', 'Señalización visible'],
+    checklist: ['Supplies complete', 'Expiry dates', 'AED battery and pads', 'Signage visible', 'Cintas service log signed'],
     estimatedMinutes: 25,
   },
 ];

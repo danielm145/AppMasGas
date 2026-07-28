@@ -39,6 +39,13 @@ export default function Settings() {
     waiverMonths: 12,
     taxRate: 7,
   });
+  const [policy, setPolicy] = useState({
+    mustSwim: true,
+    photoId: true,
+    cardOnly: true,
+    noRefunds: true,
+    parking: 'Paid parking Fri–Sun and holidays (county park lot).',
+  });
 
   return (
     <div className="mx-auto max-w-[1200px]">
@@ -82,6 +89,24 @@ export default function Settings() {
               <Field label="Waiver validity (months)" hint="After that the customer must sign again" className="sm:col-span-2">
                 <Input type="number" value={park.waiverMonths} onChange={(e) => setPark({ ...park, waiverMonths: Number(e.target.value) })} />
               </Field>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Front-desk policy</p>
+                <div className="space-y-2.5">
+                  <Checkbox
+                    label="Must know how to swim"
+                    hint="Blocks check-in until the customer declares it"
+                    checked={policy.mustSwim}
+                    onChange={(v) => setPolicy({ ...policy, mustSwim: v })}
+                  />
+                  <Checkbox label="Photo ID required at the counter" checked={policy.photoId} onChange={(v) => setPolicy({ ...policy, photoId: v })} />
+                  <Checkbox label="Credit card only" checked={policy.cardOnly} onChange={(v) => setPolicy({ ...policy, cardOnly: v })} />
+                  <Checkbox label="No refunds or rainchecks" checked={policy.noRefunds} onChange={(v) => setPolicy({ ...policy, noRefunds: v })} />
+                </div>
+                <Field label="Parking notice" className="mt-3" hint="Shown on the booking confirmation email">
+                  <Input value={policy.parking} onChange={(e) => setPolicy({ ...policy, parking: e.target.value })} />
+                </Field>
+              </div>
+
               <div className="sm:col-span-2">
                 <Button onClick={() => toast('Park settings saved')}>
                   <Save className="h-4 w-4" /> Save changes

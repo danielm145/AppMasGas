@@ -43,6 +43,7 @@ const GLYPHS: Record<AssetCategory, string> = {
   obstacle: 'M40 130l50-56h34l36 56zM90 74h34',
   'cable-system': 'M30 60h140M46 60v70M154 60v70M100 60v34M100 94l-18 36h36z',
   inflatable: 'M52 80h96v40a20 20 0 01-20 20H72a20 20 0 01-20-20zM72 80V60h56v20',
+  safety: 'M62 74h76v66H62zM88 74V58h24v16M100 92v34M83 109h34',
   other: 'M60 60h80v80H60z',
 };
 

@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CircleStop, HardHat, Plus, Radio, RectangleHorizontal, Timer, TrendingDown, Waves } from 'lucide-react';
+import { CircleStop, HardHat, Plus, Radio, RectangleHorizontal, Waves } from 'lucide-react';
 import { congestion } from '@/lib/analytics';
 import { PersonAvatar } from '@/components/CustomerQuickView';
 import { useStore } from '@/lib/store';
 import { LINE_LABELS, PACKAGE_META, type CableLine } from '@/lib/types';
-import { cn, formatTime, num, pct, relativeTime } from '@/lib/utils';
+import { cn, formatTime, relativeTime } from '@/lib/utils';
 import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, Segmented } from '@/components/ui';
 
 /**
@@ -13,7 +13,7 @@ import { Badge, Button, Card, CardHeader, EmptyState, PageHeader, ProgressBar, S
  * tiempo le queda y qué tan cargada está cada atracción.
  */
 export default function LiveOps() {
-  const { state, logLap, endSession, toast } = useStore();
+  const { state, addTurn, endSession, toast } = useStore();
   const [filter, setFilter] = useState<'all' | CableLine>('all');
 
   const active = useMemo(
@@ -28,8 +28,6 @@ export default function LiveOps() {
   const lines = useMemo(() => congestion(state.rideSessions), [state.rideSessions]);
   const totalActive = state.rideSessions.filter((s) => s.status === 'active').length;
 
-  const lapsToday = state.lapLogs.filter((l) => new Date(l.timestamp).toDateString() === new Date().toDateString());
-  const fallRate = lapsToday.length ? lapsToday.filter((l) => !l.completed).length / lapsToday.length : 0;
 
   return (
     <div className="mx-auto max-w-[1400px]">
@@ -83,24 +81,6 @@ export default function LiveOps() {
           <div>
             <p className="text-xl font-extrabold tabular-nums text-deep-900">{totalActive}</p>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">riders on the water</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-            <Timer className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-xl font-extrabold tabular-nums text-deep-900">{num(lapsToday.length)}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">laps today</p>
-          </div>
-        </Card>
-        <Card className="flex items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <TrendingDown className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-xl font-extrabold tabular-nums text-deep-900">{pct(fallRate)}</p>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">caídas sobre laps</p>
           </div>
         </Card>
       </div>
@@ -174,12 +154,12 @@ export default function LiveOps() {
 
                   <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-slate-50 py-2 text-center">
                     <div>
-                      <p className="text-base font-extrabold tabular-nums text-deep-900">{s.lapsCompleted}</p>
+                      <p className="text-base font-extrabold tabular-nums text-deep-900">{s.turnsUsed}</p>
                       <p className="text-[10px] font-semibold uppercase text-slate-500">laps</p>
                     </div>
                     <div>
-                      <p className="text-base font-extrabold tabular-nums text-deep-900">{s.falls}</p>
-                      <p className="text-[10px] font-semibold uppercase text-slate-500">falls</p>
+                      <p className="text-base font-extrabold tabular-nums text-deep-900">{state.queue.filter((q) => q.sessionId === s.id).length}</p>
+                      <p className="text-[10px] font-semibold uppercase text-slate-500">in line</p>
                     </div>
                     <div>
                       <p className="text-base font-extrabold tabular-nums text-deep-900">{elapsed}′</p>
@@ -198,21 +178,11 @@ export default function LiveOps() {
                       size="sm"
                       className="flex-1"
                       onClick={() => {
-                        logLap(s.wristbandCode);
-                        toast(`Lap ${s.lapsCompleted + 1} recorded · ${s.wristbandCode}`);
+                        addTurn(s.id);
+                        toast(`Turn ${s.turnsUsed + 1} · ${c?.firstName ?? 'rider'}`);
                       }}
                     >
-                      +1 lap
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        logLap(s.wristbandCode, { completed: false });
-                        toast('Fall recorded', 'info');
-                      }}
-                    >
-                      Caída
+                      +1 turn
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => endSession(s.id)} title="End session">
                       <CircleStop className="h-4 w-4" />

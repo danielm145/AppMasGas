@@ -20,7 +20,7 @@ import { Badge, Button, Card, CardHeader, EmptyState, Input, PageHeader } from '
  * teclado, así que el mismo flujo sirve con lector Bluetooth o con la cámara.
  */
 export default function Scanner() {
-  const { state, logLap, currentUser } = useStore();
+  const { state, joinQueue, currentUser } = useStore();
   const [code, setCode] = useState('');
   const [cameraOpen, setCameraOpen] = useState(false);
   const [feed, setFeed] = useState<{ id: string; ok: boolean; text: string; sub: string; at: string }[]>([]);
@@ -32,12 +32,12 @@ export default function Scanner() {
 
   const activeSessions = useMemo(() => state.rideSessions.filter((s) => s.status === 'active'), [state.rideSessions]);
 
-  const submit = (raw: string, completed = true) => {
+  const submit = (raw: string) => {
     const value = raw.trim().replace(/^mws:\/\/(ride|asset)\//i, '').toUpperCase();
     if (!value) return;
 
-    const lap = logLap(value, { completed });
-    const session = lap ? state.rideSessions.find((s) => s.id === lap.sessionId) : undefined;
+    const joined = joinQueue(value);
+    const session = joined ? state.rideSessions.find((s) => s.id === joined.entry.sessionId) : undefined;
     const customer = state.customers.find((c) => c.id === session?.customerId);
     const scannedAsset = state.assets.find((a) => a.code === value);
 
@@ -45,14 +45,14 @@ export default function Scanner() {
       [
         {
           id: `${value}-${Date.now()}`,
-          ok: !!lap,
-          text: lap ? `${customer?.firstName ?? 'Rider'} ${customer?.lastName ?? ''}` : `Code with no active session: ${value}`,
-          sub: lap
+          ok: !!joined,
+          text: joined ? `${customer?.firstName ?? 'Rider'} ${customer?.lastName ?? ''}` : `Code with no active session: ${value}`,
+          sub: joined
             ? [
-                completed ? 'Lap recorded' : 'Fall recorded',
+                joined!.entry.lastTurn ? 'LAST TURN' : `In line · #${joined!.position}`,
                 scannedAsset ? `${ASSET_CATEGORY_LABELS[scannedAsset.category].toLowerCase()} ${scannedAsset.code}` : `pulsera ${value}`,
                 LINE_LABELS[session!.line],
-                `total ${session!.lapsCompleted + (completed ? 1 : 0)}`,
+                `${session!.turnsUsed} turns so far`,
                 `scanned by ${currentUser.firstName}`,
               ].join(' · ')
             : scannedAsset
@@ -111,9 +111,6 @@ export default function Scanner() {
               <Zap className="h-4 w-4" /> Vuelta
             </Button>
           </form>
-          <button onClick={() => submit(code, false)} className="mt-3 text-xs font-semibold text-white/60 underline-offset-2 hover:text-white hover:underline">
-            Record as a fall (lap not completed)
-          </button>
           <p className="mx-auto mt-4 max-w-md text-[11px] leading-relaxed text-white/50">
             Helmets and boards carry a permanent vinyl label: use the helmet code (<span className="font-mono">MWC-HLM-…</span>) or the board code (<span className="font-mono">MWC-BRD-…</span>) — both resolve to the same session. Every scan is signed by the employee who made it — right now, <span className="font-semibold text-white/80">{currentUser.firstName} {currentUser.lastName}</span>.
           </p>
@@ -123,7 +120,7 @@ export default function Scanner() {
       <QrScanner
         open={cameraOpen}
         onClose={() => setCameraOpen(false)}
-        onScan={(value) => submit(value)}
+        onScan={submit}
       />
 
       {/* Para el demo: estos QR se muestran en el portátil y se escanean con el teléfono */}
@@ -189,7 +186,7 @@ export default function Scanner() {
                           {!helmet && !board && <span className="font-mono font-bold text-slate-500">{s.wristbandCode}</span>}
                         </p>
                       </div>
-                      <Badge tone="lagoon">{s.lapsCompleted} laps</Badge>
+                      <Badge tone="lagoon">{s.turnsUsed} laps</Badge>
                     </button>
                   </li>
                 );

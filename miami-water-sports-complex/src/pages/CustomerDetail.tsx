@@ -52,7 +52,6 @@ export default function CustomerDetail() {
     () => state.rideSessions.filter((s) => s.customerId === id).sort((a, b) => b.startAt.localeCompare(a.startAt)),
     [state.rideSessions, id],
   );
-  const laps = useMemo(() => state.lapLogs.filter((l) => l.customerId === id), [state.lapLogs, id]);
   const waivers = useMemo(() => state.waivers.filter((w) => w.customerId === id), [state.waivers, id]);
   const ledger = useMemo(
     () => state.pointsLedger.filter((p) => p.customerId === id).sort((a, b) => b.date.localeCompare(a.date)),
@@ -66,11 +65,11 @@ export default function CustomerDetail() {
   const activeWaiver = waivers.find((w) => w.type !== 'photo-release' && new Date(w.expiresAt) > new Date());
   const nt = nextTier(customer.tier);
   const toNext = nt ? TIER_META[nt].min - customer.lifetimePoints : 0;
-  const completedLaps = laps.filter((l) => l.completed).length;
+  const totalTurns = sessions.reduce((a, s) => a + s.turnsUsed, 0);
 
   const favoriteLine = Object.entries(
-    laps.reduce<Record<string, number>>((acc, l) => {
-      acc[l.line] = (acc[l.line] ?? 0) + 1;
+    sessions.reduce<Record<string, number>>((acc, ses) => {
+      acc[ses.line] = (acc[ses.line] ?? 0) + 1;
       return acc;
     }, {}),
   ).sort((a, b) => b[1] - a[1])[0];
@@ -137,7 +136,7 @@ export default function CustomerDetail() {
             {[
               ['Visitas', num(customer.visits), 'histórico'],
               ['Gasto total', money(customer.lifetimeSpend), `prom. ${money(customer.visits ? customer.lifetimeSpend / customer.visits : 0)} por visita`],
-              ['Laps', num(completedLaps), favoriteLine ? `favorita: ${LINE_LABELS[favoriteLine[0] as keyof typeof LINE_LABELS]}` : ''],
+              ['Laps', num(totalTurns), favoriteLine ? `favorita: ${LINE_LABELS[favoriteLine[0] as keyof typeof LINE_LABELS]}` : ''],
               ['Puntos disponibles', num(customer.points), `${num(customer.lifetimePoints)} de por vida`],
             ].map(([label, value, hint]) => (
               <div key={label} className="rounded-xl border border-slate-200 p-3.5">
@@ -188,7 +187,6 @@ export default function CustomerDetail() {
                         <Th>Package</Th>
                         <Th>Attraction</Th>
                         <Th className="text-right">Laps</Th>
-                        <Th className="text-right">Caídas</Th>
                         <Th className="text-right">Pagado</Th>
                       </tr>
                     </thead>
@@ -201,8 +199,7 @@ export default function CustomerDetail() {
                           </Td>
                           <Td className="text-[12px]">{PACKAGE_META[s.packageType].label}</Td>
                           <Td className="text-[12px] text-slate-600">{LINE_LABELS[s.line]}</Td>
-                          <Td className="text-right font-semibold tabular-nums">{s.lapsCompleted}</Td>
-                          <Td className="text-right tabular-nums text-slate-500">{s.falls}</Td>
+                          <Td className="text-right font-semibold tabular-nums">{s.turnsUsed}</Td>
                           <Td className="text-right tabular-nums">{money(s.amountPaid)}</Td>
                         </Tr>
                       ))}

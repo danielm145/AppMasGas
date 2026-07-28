@@ -29,10 +29,10 @@ const STEPS: Step[] = [
     action: 'Open check-in',
   },
   {
-    to: '/scanner',
-    title: 'They ride',
-    body: 'On the dock, point the phone at the QR sticker on their helmet. The lap is counted, and the scan is signed with the employee who did it. No paper, no clipboard.',
-    action: 'Open the scanner',
+    to: '/dock',
+    title: 'They get in line',
+    body: 'At the line they scan the QR on their wristband and join the queue. The operator sees the next rider\'s face on screen and taps once to send them out. If their time is nearly up, the screen says LAST TURN before they get in the water.',
+    action: 'Open the line queue',
   },
   {
     to: '/operations',

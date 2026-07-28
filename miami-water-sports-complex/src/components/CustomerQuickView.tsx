@@ -189,7 +189,7 @@ export function CustomerQuickView() {
               ))}
               {!gear.length && <span className="font-sans font-normal text-slate-500">No gear linked</span>}
             </p>
-            <p className="mt-1 text-[11px] text-slate-500">{session.lapsCompleted} laps · started {relativeTime(session.startAt)}</p>
+            <p className="mt-1 text-[11px] text-slate-500">{session.turnsUsed} turns · started {relativeTime(session.startAt)}</p>
           </div>
         )}
 

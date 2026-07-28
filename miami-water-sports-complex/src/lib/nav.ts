@@ -5,14 +5,12 @@ import {
   BarChart3,
   Boxes,
   CalendarDays,
-  ClipboardCheck,
   FileSignature,
   Gift,
   LayoutDashboard,
   LifeBuoy,
   Megaphone,
   Package,
-  ScanLine,
   Settings,
   Sun,
   Users,
@@ -42,11 +40,10 @@ const LEADERSHIP: Role[] = ['owner', 'manager'];
 const FLOOR: Role[] = ['owner', 'manager', 'supervisor', 'operator', 'frontdesk'];
 
 export const NAV: NavItem[] = [
-  { to: '/dock', label: 'Dock', icon: Anchor, roles: DOCK, group: 'General', simple: true, purpose: 'The whole job for someone standing at the water: count a lap, add a new customer. Nothing else on screen.' },
+  { to: '/dock', label: 'Line queue', icon: Anchor, roles: [...DOCK, 'supervisor', 'operator', 'frontdesk'], group: 'Operations', simple: true, purpose: 'The queue for each line. Riders scan their wristband to get in; the operator sends out whoever is next.' },
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ALL, group: 'General', simple: true, purpose: 'The whole park at a glance: money, how busy each line is, and anything that needs your attention today.' },
 
   { to: '/operations', label: 'Live operations', icon: Activity, roles: [...FLOOR, 'instructor'], group: 'Operations', badgeKey: 'activeSessions', simple: true, purpose: 'Who is on the water right now, how much time they have left, and their gear.' },
-  { to: '/scanner', label: 'Lap scanner', icon: ScanLine, roles: [...FLOOR, 'instructor'], group: 'Operations', simple: true, purpose: 'The dock station. Scan the QR on a helmet and the lap is counted.' },
   { to: '/rain-check', label: 'Lightning hold', icon: CloudLightning, roles: FLOOR, group: 'Operations', simple: true, purpose: 'When the lake closes for weather, the waiting line registers here instead of on paper — passes, PDF list and a self-register QR.' },
   { to: '/check-in', label: 'Check-in & gear', icon: LifeBuoy, roles: FLOOR, group: 'Operations', simple: true, purpose: 'Everything the front desk does: find the customer, sign the waiver, charge, hand out the helmet and board.' },
   { to: '/reservations', label: 'Reservations', icon: CalendarDays, roles: FLOOR, group: 'Operations' },
@@ -63,7 +60,6 @@ export const NAV: NavItem[] = [
   { to: '/supplies', label: 'Supplies', icon: Package, roles: [...LEADERSHIP, 'supervisor', 'maintenance'], group: 'Resources', badgeKey: 'lowStock' },
 
   { to: '/employees', label: 'Employees', icon: Users, roles: LEADERSHIP, group: 'Team' },
-  { to: '/schedule', label: 'Scheduling', icon: ClipboardCheck, roles: [...LEADERSHIP, 'supervisor'], group: 'Team' },
 
   { to: '/reports', label: 'Reports', icon: BarChart3, roles: [...LEADERSHIP, 'supervisor'], group: 'Analytics' },
   { to: '/settings', label: 'Settings', icon: Settings, roles: LEADERSHIP, group: 'Analytics' },

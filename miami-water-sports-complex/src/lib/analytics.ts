@@ -6,17 +6,21 @@
 
 import { addDays, groupBy, isoDate, sum } from './utils';
 import type { AppState } from './store';
-import type { CableLine, LapLog, RideSession } from './types';
+import type { CableLine, RideSession } from './types';
 
 export const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** Vueltas por hora del día (0–23), promediadas sobre los días con actividad. */
-export function lapsByHour(laps: LapLog[]) {
+/**
+ * Actividad por hora del día, contada desde las sesiones que arrancaron en cada
+ * franja. Antes se calculaba sumando cada vuelta escaneada; la sesión da la
+ * misma curva de horas pico sin guardar una fila por vuelta.
+ */
+export function lapsByHour(sessions: RideSession[]) {
   const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, label: `${hour}:00`, laps: 0, days: new Set<string>() }));
-  laps.forEach((l) => {
-    const d = new Date(l.timestamp);
+  sessions.forEach((s) => {
+    const d = new Date(s.startAt);
     const b = buckets[d.getHours()];
-    b.laps += 1;
+    b.laps += Math.max(1, s.turnsUsed);
     b.days.add(isoDate(d));
   });
   return buckets
@@ -30,13 +34,13 @@ export function lapsByHour(laps: LapLog[]) {
 }
 
 /** Mapa de calor día × hora: el insumo para decidir staffing. */
-export function heatmap(laps: LapLog[]) {
+export function heatmap(sessions: RideSession[]) {
   const grid: number[][] = Array.from({ length: 7 }, () => Array(13).fill(0));
-  laps.forEach((l) => {
-    const d = new Date(l.timestamp);
+  sessions.forEach((s) => {
+    const d = new Date(s.startAt);
     const h = d.getHours();
     if (h < 8 || h > 20) return;
-    grid[d.getDay()][h - 8] += 1;
+    grid[d.getDay()][h - 8] += Math.max(1, s.turnsUsed);
   });
   const max = Math.max(1, ...grid.flat());
   return { grid, max, hours: Array.from({ length: 13 }, (_, i) => i + 8) };
@@ -83,7 +87,7 @@ export function dailySeries(sessions: RideSession[], days = 30) {
       label: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
       revenue: sum(list, (s) => s.amountPaid),
       visits: list.length,
-      laps: sum(list, (s) => s.lapsCompleted),
+      laps: sum(list, (s) => s.turnsUsed),
     };
   });
 }
@@ -98,20 +102,19 @@ export function revenueByPackage(sessions: RideSession[], days = 30) {
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-/** Ranking de riders por vueltas en la ventana dada — insumo de fidelización. */
+/** Ranking de riders por turnos en la ventana dada — insumo de fidelización. */
 export function topRiders(state: AppState, days = 30, limit = 8) {
   const start = addDays(new Date(), -days);
-  const recent = state.lapLogs.filter((l) => new Date(l.timestamp) >= start);
-  const byCustomer = groupBy(recent, (l) => l.customerId);
+  const recent = state.rideSessions.filter((s) => new Date(s.startAt) >= start);
+  const byCustomer = groupBy(recent, (s) => s.customerId);
   return Object.entries(byCustomer)
-    .map(([customerId, laps]) => {
+    .map(([customerId, sessions]) => {
       const customer = state.customers.find((c) => c.id === customerId);
-      const visitDays = new Set(laps.map((l) => isoDate(new Date(l.timestamp)))).size;
       return {
         customer,
-        laps: laps.length,
-        visitDays,
-        completionRate: laps.filter((l) => l.completed).length / laps.length,
+        laps: sum(sessions, (s) => s.turnsUsed),
+        visitDays: new Set(sessions.map((s) => isoDate(new Date(s.startAt)))).size,
+        completionRate: 1,
       };
     })
     .filter((r) => r.customer)
@@ -149,8 +152,8 @@ export function headlineKpis(state: AppState) {
 
   const revenue = sum(in30, (s) => s.amountPaid);
   const prevRevenue = sum(prev30, (s) => s.amountPaid);
-  const laps = sum(in30, (s) => s.lapsCompleted);
-  const prevLaps = sum(prev30, (s) => s.lapsCompleted);
+  const laps = sum(in30, (s) => s.turnsUsed);
+  const prevLaps = sum(prev30, (s) => s.turnsUsed);
   const uniques = new Set(in30.map((s) => s.customerId)).size;
   const prevUniques = new Set(prev30.map((s) => s.customerId)).size;
 

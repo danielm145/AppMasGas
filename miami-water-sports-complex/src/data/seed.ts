@@ -27,7 +27,6 @@ import type {
   CampSession,
   Customer,
   Employee,
-  LapLog,
   MaintenanceTicket,
   PackageType,
   PointsLedgerEntry,
@@ -289,7 +288,6 @@ function trafficWeight(date: Date, hour: number) {
 }
 
 export const rideSessions: RideSession[] = [];
-export const lapLogs: LapLog[] = [];
 
 let sessionSeq = 0;
 for (let d = 59; d >= 0; d--) {
@@ -318,8 +316,7 @@ for (let d = 59; d >= 0; d--) {
         startAt: start.toISOString(),
         endAt: isLive ? undefined : new Date(start.getTime() + minutes * 60000).toISOString(),
         minutesPurchased: minutes,
-        lapsCompleted: laps,
-        falls: between(rng, 0, Math.round(laps / 2)),
+        turnsUsed: laps,
         assignedAssetIds: [],
         operatorId: pick(rng, operatorIds),
         status: isLive ? 'active' : 'completed',
@@ -327,23 +324,6 @@ for (let d = 59; d >= 0; d--) {
         pointsEarned: Math.round(price * 1.2),
       });
 
-      // Solo guardamos el detalle vuelta a vuelta de las últimas 3 semanas.
-      if (d <= 21) {
-        for (let l = 0; l < laps; l++) {
-          const ts = new Date(start.getTime() + l * between(rng, 90, 260) * 1000);
-          lapLogs.push({
-            id: uid('lap'),
-            sessionId,
-            customerId: customer.id,
-            wristbandCode: `WB-${String(sessionSeq).padStart(5, '0')}`,
-            timestamp: ts.toISOString(),
-            line,
-            durationSec: between(rng, 55, 190),
-            completed: rng() > 0.18,
-            operatorId: pick(rng, operatorIds),
-          });
-        }
-      }
     }
   }
 }
@@ -370,27 +350,13 @@ liveCustomers.forEach((c, i) => {
     line,
     startAt: start.toISOString(),
     minutesPurchased: 120,
-    lapsCompleted: laps,
-    falls: between(rng, 0, 4),
+    turnsUsed: laps,
     assignedAssetIds: [availableHelmets[i], availableVests[i], availableBoards[i]].filter(Boolean).map((a) => a.id),
     operatorId: pick(rng, operatorIds),
     status: 'active',
     amountPaid: 75,
     pointsEarned: 90,
   });
-  for (let l = 0; l < laps; l++) {
-    lapLogs.push({
-      id: uid('lap'),
-      sessionId,
-      customerId: c.id,
-      wristbandCode: `WB-${String(90000 + i).padStart(5, '0')}`,
-      timestamp: new Date(start.getTime() + l * 150000).toISOString(),
-      line,
-      durationSec: between(rng, 60, 180),
-      completed: rng() > 0.2,
-      operatorId: pick(rng, operatorIds),
-    });
-  }
 });
 
 // El equipo entregado queda marcado como "en uso" y con su portador actual.

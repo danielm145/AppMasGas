@@ -38,8 +38,8 @@ export default function Dashboard() {
 
   const kpis = useMemo(() => headlineKpis(state), [state]);
   const series = useMemo(() => dailySeries(state.rideSessions, 30), [state.rideSessions]);
-  const hours = useMemo(() => lapsByHour(state.lapLogs), [state.lapLogs]);
-  const heat = useMemo(() => heatmap(state.lapLogs), [state.lapLogs]);
+  const hours = useMemo(() => lapsByHour(state.rideSessions), [state.rideSessions]);
+  const heat = useMemo(() => heatmap(state.rideSessions), [state.rideSessions]);
   const lines = useMemo(() => congestion(state.rideSessions), [state.rideSessions]);
   const packages = useMemo(() => revenueByPackage(state.rideSessions), [state.rideSessions]);
   const riders = useMemo(() => topRiders(state, 30, 6), [state]);

@@ -21,7 +21,7 @@ import type {
   CampSession,
   Customer,
   Employee,
-  LapLog,
+  QueueEntry,
   MaintenanceTicket,
   Notification,
   PointsLedgerEntry,
@@ -44,7 +44,7 @@ export interface AppState {
   assets: Asset[];
   assetEvents: AssetEvent[];
   rideSessions: RideSession[];
-  lapLogs: LapLog[];
+  queue: QueueEntry[];
   reservations: Reservation[];
   employees: Employee[];
   shifts: Shift[];
@@ -75,7 +75,7 @@ function initialState(): AppState {
     assets: seed.assets,
     assetEvents: seed.assetEvents,
     rideSessions: seed.rideSessions,
-    lapLogs: seed.lapLogs,
+    queue: [],
     reservations: seed.reservations,
     employees: seed.employees,
     shifts: seed.shifts,
@@ -211,8 +211,17 @@ interface Store {
 
   // Operación
   startSession: (input: { customerId: string; packageType: RideSession['packageType']; line: RideSession['line']; assetIds: string[] }) => RideSession;
-  /** Acepta el código de la pulsera o el de la etiqueta del casco/tabla asignados. */
-  logLap: (code: string, opts?: { completed?: boolean; durationSec?: number }) => LapLog | null;
+  /**
+   * Mete al rider en la fila de su línea a partir del código de su pulsera.
+   * Devuelve la entrada creada, o null si el código no corresponde a una
+   * sesión activa (o si ya está formado).
+   */
+  joinQueue: (code: string) => { entry: QueueEntry; position: number } | null;
+  /** El operador despacha al primero de la fila: suma su turno y lo saca. */
+  callNext: (line: RideSession['line']) => QueueEntry | null;
+  removeFromQueue: (entryId: string) => void;
+  /** Suma un turno sin pasar por la fila — para correcciones del operador. */
+  addTurn: (sessionId: string) => void;
   endSession: (sessionId: string) => void;
   updateReservation: (id: string, patch: Partial<Reservation>) => void;
 
@@ -390,8 +399,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           line,
           startAt: new Date().toISOString(),
           minutesPurchased: meta.minutes,
-          lapsCompleted: 0,
-          falls: 0,
+          turnsUsed: 0,
           assignedAssetIds: assetIds,
           operatorId: currentUser.id,
           status: 'active',
@@ -417,40 +425,54 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         toast(`Session started · ${assetIds.length} items handed out`);
         return session;
       },
-      logLap: (code, opts) => {
-        const value = code.trim().replace(/^mws:\/\/(ride|asset)\//i, '').toUpperCase();
-        // El código escaneado puede ser la pulsera o —lo habitual en el muelle—
-        // la etiqueta pegada al casco o a la tabla que lleva puesta el rider.
-        let session = state.rideSessions.find((s) => s.wristbandCode === value && s.status === 'active');
+      joinQueue: (code) => {
+        const value = code.trim().replace(/^mwc:\/\/(ride|member|asset)\//i, '').toUpperCase();
+
+        // La pulsera lleva el código permanente del cliente; se acepta también
+        // el de la sesión o el de una pieza de equipo por si acaso.
+        const customer = state.customers.find((c) => c.memberCode === value);
+        let session = customer
+          ? state.rideSessions.find((s) => s.customerId === customer.id && s.status === 'active')
+          : undefined;
+        if (!session) session = state.rideSessions.find((s) => s.wristbandCode === value && s.status === 'active');
         if (!session) {
           const asset = state.assets.find((a) => a.code === value);
-          if (asset) {
-            session = state.rideSessions.find((s) => s.status === 'active' && s.assignedAssetIds.includes(asset.id));
-          }
+          if (asset) session = state.rideSessions.find((s) => s.status === 'active' && s.assignedAssetIds.includes(asset.id));
         }
         if (!session) return null;
-        const lap: LapLog = {
-          id: uid('lap'),
-          sessionId: session.id,
+        if (state.queue.some((q) => q.sessionId === session!.id)) return null;
+
+        // ¿Le alcanza el tiempo para otro turno después de este? Si no, se le
+        // avisa aquí y no cuando ya está en el agua.
+        const minutesLeft = session.minutesPurchased - (Date.now() - new Date(session.startAt).getTime()) / 60000;
+        const entry: QueueEntry = {
+          id: uid('q'),
           customerId: session.customerId,
-          wristbandCode: session.wristbandCode,
-          timestamp: new Date().toISOString(),
+          sessionId: session.id,
           line: session.line,
-          durationSec: opts?.durationSec ?? 120,
-          completed: opts?.completed ?? true,
-          operatorId: currentUser.id,
+          joinedAt: new Date().toISOString(),
+          lastTurn: minutesLeft <= 12,
         };
+        const position = state.queue.filter((q) => q.line === entry.line).length + 1;
+        mutate('queue', (prev) => [...prev, entry]);
+        return { entry, position };
+      },
+
+      callNext: (line) => {
+        const next = state.queue.filter((q) => q.line === line).sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))[0];
+        if (!next) return null;
         setState((prev) => ({
           ...prev,
-          lapLogs: [lap, ...prev.lapLogs],
-          rideSessions: prev.rideSessions.map((s) =>
-            s.id === session.id
-              ? { ...s, lapsCompleted: s.lapsCompleted + (lap.completed ? 1 : 0), falls: s.falls + (lap.completed ? 0 : 1) }
-              : s,
-          ),
+          queue: prev.queue.filter((q) => q.id !== next.id),
+          rideSessions: prev.rideSessions.map((s) => (s.id === next.sessionId ? { ...s, turnsUsed: s.turnsUsed + 1 } : s)),
         }));
-        return lap;
+        return next;
       },
+
+      removeFromQueue: (entryId) => mutate('queue', (prev) => prev.filter((q) => q.id !== entryId)),
+
+      addTurn: (sessionId) =>
+        mutate('rideSessions', (prev) => prev.map((s) => (s.id === sessionId ? { ...s, turnsUsed: s.turnsUsed + 1 } : s))),
       endSession: (sessionId) => {
         const session = state.rideSessions.find((s) => s.id === sessionId);
         if (!session) return;
@@ -459,6 +481,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((prev) => ({
           ...prev,
           rideSessions: prev.rideSessions.map((s) => (s.id === sessionId ? { ...s, status: 'completed', endAt: new Date().toISOString() } : s)),
+          queue: prev.queue.filter((q) => q.sessionId !== sessionId),
           assets: prev.assets.map((a) =>
             session.assignedAssetIds.includes(a.id) ? { ...a, status: 'available', assignedTo: undefined, usageHours: a.usageHours + session.minutesPurchased / 60 } : a,
           ),

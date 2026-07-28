@@ -287,13 +287,36 @@ export interface RideSession {
   startAt: string;
   endAt?: string;
   minutesPurchased: number;
-  lapsCompleted: number;
-  falls: number;
+  /**
+   * Contador de turnos, no una bitácora.
+   *
+   * Guardar una fila por cada vuelta hace crecer la base sin límite y sin que
+   * nadie consulte ese detalle nunca. Un entero por sesión responde las mismas
+   * preguntas de negocio a una milésima del costo.
+   */
+  turnsUsed: number;
   assignedAssetIds: string[];
   operatorId: string;
   status: SessionStatus;
   amountPaid: number;
   pointsEarned: number;
+}
+
+/**
+ * Fila de una línea.
+ *
+ * Es una tabla que se vacía sola: una persona entra al escanear su pulsera y
+ * sale cuando el operador la llama. Nunca crece — a lo sumo tiene la gente que
+ * cabe parada en el muelle.
+ */
+export interface QueueEntry {
+  id: string;
+  customerId: string;
+  sessionId: string;
+  line: CableLine;
+  joinedAt: string;
+  /** True cuando al rider ya no le alcanza el tiempo para otro turno después de este. */
+  lastTurn: boolean;
 }
 
 export interface LapLog {

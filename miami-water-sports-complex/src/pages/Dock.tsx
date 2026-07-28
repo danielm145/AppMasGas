@@ -1,283 +1,219 @@
-import { useMemo, useRef, useState } from 'react';
-import { Camera, Check, ScanLine, UserPlus, Waves, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertTriangle, ScanLine, UserMinus, Users, Waves } from 'lucide-react';
 import { QrScanner } from '@/components/QrScanner';
 import { PersonAvatar } from '@/components/CustomerQuickView';
-import { LogoMark } from '@/components/Logo';
-import { readImageFile } from '@/lib/images';
 import { useStore } from '@/lib/store';
-import { cn, formatTime, fullName } from '@/lib/utils';
-import { Button, Field, Input, Modal } from '@/components/ui';
+import { LINE_LABELS, type CableLine } from '@/lib/types';
+import { avatarColor } from '@/lib/images';
+import { cn, fullName, initials, relativeTime } from '@/lib/utils';
+import { Button, Input } from '@/components/ui';
 
 /**
- * Modo muelle.
+ * La fila de una línea.
  *
- * Una sola pantalla para quien está de pie junto al agua, con el teléfono en
- * una mano y una cuerda en la otra. Dos cosas: registrar a alguien nuevo y
- * contar vueltas. Nada más — ni menús, ni reportes, ni configuración.
+ * El rider escanea su pulsera y entra a la fila. El operador ve la cara del que
+ * sigue —grande, sin leer nada— y aprieta un botón cuando lo despacha. Eso suma
+ * un turno a su sesión y adelanta la fila.
  *
- * Todo está dimensionado para el pulgar mojado: nada por debajo de 56 px de
- * alto, y el resultado de cada acción se ve sin leer.
+ * No se guarda una fila por turno: la sesión lleva un contador. La fila misma es
+ * efímera, solo existe la gente parada en el muelle en este momento.
  */
 export default function Dock() {
-  const { state, currentUser, addCustomer, logLap, toast } = useStore();
+  const { state, joinQueue, callNext, removeFromQueue, toast } = useStore();
+  const [line, setLine] = useState<CableLine>('full-cable');
   const [scanning, setScanning] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [feed, setFeed] = useState<{ id: string; ok: boolean; text: string; sub: string; at: string }[]>([]);
+  const [manual, setManual] = useState('');
 
-  const [photo, setPhoto] = useState<string>();
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', canSwim: false });
-  const photoRef = useRef<HTMLInputElement>(null);
+  const queue = useMemo(
+    () =>
+      state.queue
+        .filter((q) => q.line === line)
+        .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt))
+        .map((q) => ({ ...q, customer: state.customers.find((c) => c.id === q.customerId) })),
+    [state.queue, state.customers, line],
+  );
 
-  const active = useMemo(() => state.rideSessions.filter((s) => s.status === 'active'), [state.rideSessions]);
-  const lapsToday = state.lapLogs.filter((l) => new Date(l.timestamp).toDateString() === new Date().toDateString()).length;
+  const counts = useMemo(() => {
+    const acc: Partial<Record<CableLine, number>> = {};
+    state.queue.forEach((q) => (acc[q.line] = (acc[q.line] ?? 0) + 1));
+    return acc;
+  }, [state.queue]);
+
+  const next = queue[0];
+  const upcoming = queue.slice(1);
 
   const onScan = (raw: string) => {
-    const value = raw.trim().replace(/^mwc:\/\/(ride|asset)\//i, '').toUpperCase();
-    const lap = logLap(value);
-    const session = lap ? state.rideSessions.find((s) => s.id === lap.sessionId) : undefined;
-    const rider = state.customers.find((c) => c.id === session?.customerId);
-
-    setFeed((prev) =>
-      [
-        {
-          id: `${value}-${Date.now()}`,
-          ok: !!lap,
-          text: lap && rider ? fullName(rider) : `Not recognized: ${value}`,
-          sub: lap ? `Lap ${session!.lapsCompleted + 1} · ${value}` : 'That tag is not checked out to anyone',
-          at: new Date().toISOString(),
-        },
-        ...prev,
-      ].slice(0, 12),
+    const result = joinQueue(raw);
+    if (!result) {
+      toast('That wristband is not checked in — or they are already in line', 'error');
+      return;
+    }
+    const rider = state.customers.find((c) => c.id === result.entry.customerId);
+    toast(
+      result.entry.lastTurn
+        ? `${rider?.firstName ?? 'Rider'} joined — this is their LAST turn`
+        : `${rider?.firstName ?? 'Rider'} joined the line · #${result.position}`,
+      result.entry.lastTurn ? 'info' : 'success',
     );
   };
 
-  const saveCustomer = () => {
-    if (!form.firstName || !form.phone) {
-      toast('Name and phone are required', 'error');
-      return;
-    }
-    if (!form.canSwim) {
-      toast('They must say they can swim', 'error');
-      return;
-    }
-    addCustomer({
-      firstName: form.firstName,
-      lastName: form.lastName || '—',
-      email: `${form.phone.replace(/\D/g, '')}@pending.mwc`,
-      phone: form.phone,
-      dob: '2000-01-01',
-      city: 'Miami',
-      state: 'FL',
-      zip: '',
-      photoUrl: photo,
-      skillLevel: 'beginner',
-      emergencyContact: { name: '', relation: '', phone: '' },
-      isMinor: false,
-      canSwim: 'declared',
-      idVerified: false,
-      marketingOptIn: true,
-      smsOptIn: true,
-      tags: ['dock'],
-    });
-    setForm({ firstName: '', lastName: '', phone: '', canSwim: false });
-    setPhoto(undefined);
-    setRegistering(false);
+  const send = () => {
+    const called = callNext(line);
+    if (!called) return;
+    const rider = state.customers.find((c) => c.id === called.customerId);
+    toast(`${rider?.firstName ?? 'Rider'} sent out`);
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
-      {/* Cabecera: quién eres y cómo va el día */}
-      <div className="wave-bg mb-5 flex items-center gap-4 rounded-2xl px-5 py-5 text-white">
-        <LogoMark className="h-9 w-14 shrink-0 text-white" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-extrabold">Hi, {currentUser.firstName}</p>
-          <p className="text-sm text-white/75">
-            {active.length} on the water · {lapsToday} laps today
-          </p>
-        </div>
+    <div className="mx-auto max-w-3xl">
+      {/* Selector de línea — cada una lleva su propia fila */}
+      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        {(Object.keys(LINE_LABELS) as CableLine[]).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLine(l)}
+            className={cn(
+              'focus-ring flex shrink-0 items-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition',
+              line === l ? 'bg-deep-900 text-white shadow-pop' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:text-deep-900',
+            )}
+          >
+            {LINE_LABELS[l].split(' (')[0]}
+            {(counts[l] ?? 0) > 0 && (
+              <span className={cn('rounded-full px-2 py-0.5 text-xs', line === l ? 'bg-lagoon-500 text-white' : 'bg-slate-100 text-slate-600')}>
+                {counts[l]}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Las dos únicas cosas que se hacen aquí */}
-      <div className="mb-5 grid gap-3">
-        <button
-          onClick={() => setScanning(true)}
-          className="focus-ring flex items-center gap-4 rounded-2xl bg-sunset-500 px-6 py-7 text-left text-white shadow-pop transition hover:bg-sunset-600"
-        >
-          <ScanLine className="h-10 w-10 shrink-0" />
-          <span>
-            <span className="block text-2xl font-extrabold leading-tight">Count a lap</span>
-            <span className="block text-sm text-white/85">Point the camera at the helmet</span>
-          </span>
-        </button>
-
-        <button
-          onClick={() => setRegistering(true)}
-          className="focus-ring flex items-center gap-4 rounded-2xl bg-lagoon-600 px-6 py-7 text-left text-white shadow-pop transition hover:bg-lagoon-700"
-        >
-          <UserPlus className="h-10 w-10 shrink-0" />
-          <span>
-            <span className="block text-2xl font-extrabold leading-tight">New customer</span>
-            <span className="block text-sm text-white/85">Name, phone and photo — that is it</span>
-          </span>
-        </button>
-      </div>
-
-      {/* Lo que acaba de pasar */}
-      {feed.length > 0 && (
-        <div className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <p className="border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-            Just now
-          </p>
-          <ul className="divide-y divide-slate-100">
-            {feed.map((f) => (
-              <li key={f.id} className={cn('flex items-center gap-3 px-5 py-3.5', !f.ok && 'bg-rose-50')}>
-                <span
-                  className={cn(
-                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
-                    f.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700',
-                  )}
-                >
-                  {f.ok ? <Check className="h-5 w-5" strokeWidth={3} /> : <X className="h-5 w-5" strokeWidth={3} />}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-base font-bold text-deep-900">{f.text}</span>
-                  <span className="block truncate text-xs text-slate-500">{f.sub}</span>
-                </span>
-                <span className="shrink-0 font-mono text-[11px] text-slate-400">{formatTime(f.at)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Quién está en el agua — tocar la foto abre su contacto de emergencia */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <p className="border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
-          On the water — {active.length}
+      {/* Quien sigue — la cara ocupa la pantalla a propósito */}
+      <div className="mb-4 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-card">
+        <p className="border-b border-slate-100 bg-slate-50 px-5 py-2.5 text-[11px] font-black uppercase tracking-widest text-slate-500">
+          Next up · {LINE_LABELS[line]}
         </p>
-        {active.length ? (
-          <ul className="divide-y divide-slate-100">
-            {active.map((s) => {
-              const rider = state.customers.find((c) => c.id === s.customerId);
-              const helmet = state.assets.find((a) => s.assignedAssetIds.includes(a.id) && a.category === 'helmet');
-              return (
-                <li key={s.id} className="flex items-center gap-3 px-5 py-3.5">
-                  <PersonAvatar
-                    customerId={s.customerId}
-                    name={rider ? fullName(rider) : 'Rider'}
-                    src={rider?.photoUrl}
-                    size="lg"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-base font-bold text-deep-900">{rider ? fullName(rider) : 'Rider'}</p>
-                    <p className="truncate font-mono text-xs font-bold text-lagoon-700">{helmet?.code ?? s.wristbandCode}</p>
-                  </div>
-                  <Button
-                    size="lg"
-                    className="h-14 shrink-0 px-5 text-base"
-                    onClick={() => {
-                      logLap(helmet?.code ?? s.wristbandCode);
-                      toast(`Lap ${s.lapsCompleted + 1} · ${rider?.firstName ?? 'rider'}`);
-                    }}
-                  >
-                    +1 lap
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
+
+        {next ? (
+          <div className="p-5">
+            <div className="flex items-center gap-5">
+              {next.customer?.photoUrl ? (
+                <img
+                  src={next.customer.photoUrl}
+                  alt=""
+                  className="h-32 w-32 shrink-0 rounded-2xl object-cover ring-4 ring-lagoon-100"
+                />
+              ) : (
+                <span
+                  className="flex h-32 w-32 shrink-0 items-center justify-center rounded-2xl text-4xl font-black text-white ring-4 ring-lagoon-100"
+                  style={{ backgroundColor: avatarColor(next.customer ? fullName(next.customer) : 'Rider') }}
+                  aria-hidden
+                >
+                  {initials(next.customer?.firstName ?? 'R', next.customer?.lastName ?? '')}
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-2xl font-extrabold leading-tight text-deep-900" style={{ textWrap: 'balance' } as never}>
+                  {next.customer ? fullName(next.customer) : 'Rider'}
+                </p>
+                <p className="mt-1 font-mono text-sm font-bold text-lagoon-700">{next.customer?.memberCode}</p>
+                <p className="mt-0.5 text-sm text-slate-500">Waiting {relativeTime(next.joinedAt)}</p>
+                {next.lastTurn && (
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-black uppercase text-amber-800">
+                    <AlertTriangle className="h-4 w-4" /> Last turn
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <Button onClick={send} className="mt-5 h-20 w-full text-2xl">
+              Send them out
+            </Button>
+            <button
+              onClick={() => {
+                removeFromQueue(next.id);
+                toast('Removed from the line', 'info');
+              }}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 py-2 text-xs font-semibold text-slate-400 hover:text-rose-600"
+            >
+              <UserMinus className="h-3.5 w-3.5" /> They left the line
+            </button>
+          </div>
         ) : (
-          <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
-            <Waves className="h-8 w-8 text-slate-300" />
-            <p className="text-sm font-semibold text-deep-900">Nobody on the water</p>
-            <p className="text-xs text-slate-500">Riders show up here once the front desk checks them in.</p>
+          <div className="flex flex-col items-center gap-2 px-5 py-14 text-center">
+            <Waves className="h-10 w-10 text-slate-300" />
+            <p className="text-lg font-bold text-deep-900">Line is empty</p>
+            <p className="max-w-xs text-sm text-slate-500">
+              Scan a wristband to put someone in line for {LINE_LABELS[line]}.
+            </p>
           </div>
         )}
       </div>
 
-      <QrScanner open={scanning} onClose={() => setScanning(false)} onScan={onScan} />
-
-      {/* Alta de cliente — cuatro campos, nada más */}
-      <Modal
-        open={registering}
-        onClose={() => setRegistering(false)}
-        title="New customer"
-        subtitle="Just enough to get them on the water. The desk can fill in the rest later."
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" size="lg" onClick={() => setRegistering(false)}>
-              Cancel
-            </Button>
-            <Button size="lg" onClick={saveCustomer}>
-              Save
-            </Button>
-          </>
-        }
+      {/* Escanear pulsera */}
+      <button
+        onClick={() => setScanning(true)}
+        className="focus-ring mb-4 flex w-full items-center gap-4 rounded-2xl bg-sunset-500 px-6 py-6 text-left text-white shadow-pop transition hover:bg-sunset-600"
       >
-        <div className="space-y-4">
-          <button
-            onClick={() => photoRef.current?.click()}
-            className={cn(
-              'focus-ring mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 transition',
-              photo ? 'border-emerald-400' : 'border-dashed border-slate-300 bg-slate-50 hover:border-lagoon-400',
-            )}
-            aria-label="Take their photo"
-          >
-            {photo ? (
-              <img src={photo} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex flex-col items-center gap-1 text-slate-400">
-                <Camera className="h-8 w-8" />
-                <span className="text-[11px] font-bold">Photo</span>
-              </span>
-            )}
-          </button>
-          <input
-            ref={photoRef}
-            type="file"
-            accept="image/*"
-            capture="user"
-            className="sr-only"
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              if (f) setPhoto(await readImageFile(f));
-              e.target.value = '';
-            }}
-          />
+        <ScanLine className="h-10 w-10 shrink-0" />
+        <span>
+          <span className="block text-2xl font-extrabold leading-tight">Scan a wristband</span>
+          <span className="block text-sm text-white/85">Puts them at the back of this line</span>
+        </span>
+      </button>
 
-          <Field label="First name" required>
-            <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} className="h-14 text-lg" />
-          </Field>
-          <Field label="Last name">
-            <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} className="h-14 text-lg" />
-          </Field>
-          <Field label="Phone" required>
-            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="h-14 text-lg" inputMode="tel" />
-          </Field>
+      {/* Salida manual: una pulsera rayada no puede parar la fila */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!manual.trim()) return;
+          onScan(manual);
+          setManual('');
+        }}
+        className="mb-4 flex gap-2"
+      >
+        <Input
+          value={manual}
+          onChange={(e) => setManual(e.target.value)}
+          placeholder="MWC-1004"
+          className="h-14 text-center font-mono text-base font-bold uppercase tracking-widest"
+        />
+        <Button type="submit" size="lg" variant="outline" className="h-14 shrink-0 px-5">
+          Add
+        </Button>
+      </form>
 
-          <button
-            onClick={() => setForm({ ...form, canSwim: !form.canSwim })}
-            className={cn(
-              'focus-ring flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition',
-              form.canSwim ? 'border-emerald-500 bg-emerald-50' : 'border-deep-900 bg-slate-50',
-            )}
-          >
-            <span
-              className={cn(
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                form.canSwim ? 'bg-emerald-500 text-white' : 'border-2 border-slate-300 bg-white',
-              )}
-            >
-              {form.canSwim && <Check className="h-5 w-5" strokeWidth={3} />}
-            </span>
-            <span>
-              <span className="block text-base font-bold text-deep-900">They know how to swim</span>
-              <span className="block text-xs text-slate-500">Park rule — required before the water</span>
-            </span>
-          </button>
-        </div>
-      </Modal>
+      {/* El resto de la fila */}
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <p className="flex items-center gap-2 border-b border-slate-100 px-5 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500">
+          <Users className="h-3.5 w-3.5" /> In line after that — {upcoming.length}
+        </p>
+        {upcoming.length ? (
+          <ul className="divide-y divide-slate-100">
+            {upcoming.map((q, i) => (
+              <li key={q.id} className="flex items-center gap-3 px-5 py-3">
+                <span className="w-6 shrink-0 text-center text-lg font-black text-slate-300">{i + 2}</span>
+                <PersonAvatar
+                  customerId={q.customerId}
+                  name={q.customer ? fullName(q.customer) : 'Rider'}
+                  src={q.customer?.photoUrl}
+                  size="lg"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-base font-bold text-deep-900">{q.customer ? fullName(q.customer) : 'Rider'}</p>
+                  <p className="text-xs text-slate-500">Waiting {relativeTime(q.joinedAt)}</p>
+                </div>
+                {q.lastTurn && (
+                  <span className="shrink-0 rounded-lg bg-amber-100 px-2 py-1 text-[10px] font-black uppercase text-amber-800">Last</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="px-5 py-8 text-center text-sm text-slate-400">Nobody else waiting</p>
+        )}
+      </div>
+
+      <QrScanner open={scanning} onClose={() => setScanning(false)} onScan={onScan} />
     </div>
   );
 }

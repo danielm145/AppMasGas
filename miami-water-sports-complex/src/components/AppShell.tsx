@@ -51,7 +51,7 @@ export function AppShell() {
 
   const visibleNav = NAV.filter((n) => n.roles.includes(role)).filter((n) => !state.simpleMode || n.simple);
   /** Barra inferior del iPhone: las cuatro cosas que se hacen de pie en el muelle. */
-  const phoneTabs = (role === 'dock' ? ['/dock'] : ['/', '/check-in', '/rain-check', '/scanner'])
+  const phoneTabs = (role === 'dock' ? ['/dock'] : ['/', '/check-in', '/dock', '/rain-check'])
     .map((to) => NAV.find((n) => n.to === to))
     .filter((n): n is NonNullable<typeof n> => !!n && n.roles.includes(role));
   const unread = state.notifications.filter((n) => !n.read);

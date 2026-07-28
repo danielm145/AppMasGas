@@ -28,11 +28,11 @@ export default function Reports() {
 
   const since = useMemo(() => addDays(new Date(), -range), [range]);
   const sessions = useMemo(() => state.rideSessions.filter((s) => new Date(s.startAt) >= since), [state.rideSessions, since]);
-  const laps = useMemo(() => state.lapLogs.filter((l) => new Date(l.timestamp) >= since), [state.lapLogs, since]);
+  
 
   const series = useMemo(() => dailySeries(state.rideSessions, range), [state.rideSessions, range]);
-  const hours = useMemo(() => lapsByHour(laps), [laps]);
-  const heat = useMemo(() => heatmap(laps), [laps]);
+  const hours = useMemo(() => lapsByHour(sessions), [sessions]);
+  const heat = useMemo(() => heatmap(sessions), [sessions]);
   const packages = useMemo(() => revenueByPackage(state.rideSessions, range), [state.rideSessions, range]);
   const riders = useMemo(() => topRiders(state, range, 10), [state, range]);
   const repeats = useMemo(() => repeatDistribution(state, range), [state, range]);
@@ -40,12 +40,12 @@ export default function Reports() {
 
   const revenue = sum(sessions, (s) => s.amountPaid);
   const uniques = new Set(sessions.map((s) => s.customerId)).size;
-  const totalLaps = sum(sessions, (s) => s.lapsCompleted);
-  const completion = laps.length ? laps.filter((l) => l.completed).length / laps.length : 0;
+  const totalLaps = sum(sessions, (s) => s.turnsUsed);
+  
 
-  /** Laps por línea y día — para ver qué atracción sostiene la operación. */
+  /** Turnos por línea y día — para ver qué atracción sostiene la operación. */
   const byLineDaily = useMemo(() => {
-    const byDay = groupBy(laps, (l) => isoDate(new Date(l.timestamp)));
+    const byDay = groupBy(sessions, (ses) => isoDate(new Date(ses.startAt)));
     return Object.entries(byDay)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([date, list]) => {
@@ -53,13 +53,13 @@ export default function Reports() {
           label: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
         };
         (Object.keys(LINE_LABELS) as CableLine[]).forEach((line) => {
-          row[line] = list.filter((l) => l.line === line).length;
+          row[line] = list.filter((ses) => ses.line === line).reduce((a, ses) => a + ses.turnsUsed, 0);
         });
         return row;
       });
-  }, [laps]);
+  }, [sessions]);
 
-  const peak = hours.reduce((a, b) => (b.laps > a.laps ? b : a), hours[0] ?? { label: '—', laps: 0, hour: 0, promedio: 0 });
+  const peak = hours.reduce((a, b) => (b.laps > a.laps ? b : a), hours[0] ?? { label: '—', laps: 0, hour: 0, dailyAverage: 0 });
   const busiestDay = heat.grid
     .map((row, i) => ({ day: WEEKDAY_LABELS[i], total: row.reduce((a, b) => a + b, 0) }))
     .sort((a, b) => b.total - a.total)[0];
@@ -100,7 +100,6 @@ export default function Reports() {
         <StatCard label="Sessions" value={num(sessions.length)} hint={`ticket prom. ${money(sessions.length ? revenue / sessions.length : 0)}`} />
         <StatCard label="Unique customers" value={num(uniques)} hint={`${(sessions.length / Math.max(1, uniques)).toFixed(1)} visits por cliente`} tone="indigo" />
         <StatCard label="Laps completadas" value={num(totalLaps)} tone="lagoon" />
-        <StatCard label="Tasa de vuelta completa" value={pct(completion)} hint="resto son caídas" tone="amber" />
       </div>
 
       <div className="mb-5 grid gap-4 lg:grid-cols-3">

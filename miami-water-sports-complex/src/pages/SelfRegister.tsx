@@ -75,7 +75,7 @@ export default function SelfRegister() {
         </h1>
         <p className="mt-1.5 max-w-sm text-sm text-white/80">
           {done
-            ? 'Show this pass at the front desk when you come back. It is valid for 60 days.'
+            ? 'Show this pass at the front desk when you come back. It is valid for one full year.'
             : 'Register here instead of waiting at the counter. You will get a pass to come back any day.'}
         </p>
       </header>

@@ -318,7 +318,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       resetDemo: () => {
         localStorage.removeItem(STORAGE_KEY);
         setState(initialState());
-        toast('Datos de demostración restaurados');
+        toast('Demo data restored');
       },
 
       /* ── Customers ── */
@@ -339,14 +339,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           { id: uid('pl'), customerId: customer.id, date: new Date().toISOString(), points: 100, type: 'bonus', reason: 'Bono de bienvenida' },
           ...prev,
         ]);
-        toast(`Cliente ${customer.firstName} ${customer.lastName} registrado`);
+        toast(`${customer.firstName} ${customer.lastName} registered`);
         return customer;
       },
       updateCustomer: (id, patch) => patchIn('customers', id, patch),
       addWaiver: (w) => {
         const waiver: Waiver = { ...w, id: uid('wv') };
         mutate('waivers', (prev) => [waiver, ...prev]);
-        toast('Waiver firmado y archivado');
+        toast('Waiver signed and filed');
         return waiver;
       },
 
@@ -367,13 +367,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           },
           ...prev,
         ]);
-        toast(`Activo ${asset.code} agregado al inventario`);
+        toast(`Asset ${asset.code} added to inventory`);
         return asset;
       },
       updateAsset: (id, patch) => patchIn('assets', id, patch),
       addAssetEvent: (e) => {
         mutate('assetEvents', (prev) => [{ ...e, id: uid('aev') }, ...prev]);
-        toast('Evento registrado en el historial del activo');
+        toast('Event added to the asset history');
       },
 
       /* ── Operación de rides ── */
@@ -414,7 +414,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           assets: prev.assets.map((a) => (assetIds.includes(a.id) ? { ...a, status: 'in-use', assignedTo: customerId } : a)),
           assetEvents: [...handoverEvents, ...prev.assetEvents],
         }));
-        toast(`Sesión iniciada · ${assetIds.length} piezas entregadas`);
+        toast(`Session started · ${assetIds.length} items handed out`);
         return session;
       },
       logLap: (code, opts) => {
@@ -491,7 +491,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ...prev.assetEvents,
           ],
         }));
-        toast(`Sesión cerrada · ${customer?.firstName ?? 'Cliente'} ganó ${earned} pts`);
+        toast(`Session closed · ${customer?.firstName ?? 'Customer'} earned ${earned} pts`);
       },
       updateReservation: (id, patch) => patchIn('reservations', id, patch),
 
@@ -514,7 +514,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ]
             : prev.assetEvents,
         }));
-        toast(`Ticket ${ticket.code} creado`);
+        toast(`Ticket ${ticket.code} created`);
         return ticket;
       },
       updateTicket: (id, patch) => {
@@ -543,7 +543,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           lastDoneAt: isoDate(new Date()),
           nextDueAt: isoDate(addDays(new Date(), days)),
         });
-        toast(`${plan.name} marcado como ejecutado`);
+        toast(`${plan.name} marked as done`);
       },
       updateSupply: (id, patch) => patchIn('supplies', id, patch),
 
@@ -551,7 +551,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addEmployee: (e) => {
         const employee: Employee = { ...e, id: uid('emp') };
         mutate('employees', (prev) => [...prev, employee]);
-        toast(`${employee.firstName} ${employee.lastName} agregado al equipo`);
+        toast(`${employee.firstName} ${employee.lastName} added to the team`);
         return employee;
       },
       updateEmployee: (id, patch) => patchIn('employees', id, patch),
@@ -581,7 +581,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addCamper: (c) => {
         const camper: Camper = { ...c, id: uid('cmp'), camperCode: `CMP-${500 + state.campers.length}` };
         mutate('campers', (prev) => [camper, ...prev]);
-        toast(`${camper.firstName} inscrito en Summer Camp`);
+        toast(`${camper.firstName} enrolled in Summer Camp`);
         return camper;
       },
       updateCamper: (id, patch) => patchIn('campers', id, patch),
@@ -597,7 +597,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ...prev,
           ]);
         }
-        toast(kind === 'in' ? 'Check-in registrado' : 'Salida registrada');
+        toast(kind === 'in' ? 'Check-in recorded' : 'Check-out recorded');
       },
 
       /* ── Rain checks ── */
@@ -607,8 +607,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           code: `RC-${String(1001 + state.rainChecks.length)}`,
           customerId,
           issuedAt: new Date().toISOString(),
-          // 60 días de vigencia: suficiente para volver, corto para no acumular pasivo.
-          expiresAt: new Date(Date.now() + 60 * 864e5).toISOString(),
+          // Un año de vigencia: el cierre por clima no es culpa del cliente y
+          // una temporada completa es lo que hace que el pase se sienta justo.
+          expiresAt: new Date(Date.now() + 365 * 864e5).toISOString(),
           reason,
           packageType,
           minutesOwed,
@@ -622,7 +623,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
       redeemRainCheck: (id) => {
         patchIn('rainChecks', id, { status: 'redeemed', redeemedAt: new Date().toISOString() });
-        toast('Rain check redeemed — open their check-in');
+        toast('Pass redeemed — run their check-in');
       },
 
       /* ── Lealtad ── */
@@ -642,7 +643,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         const reward = state.rewards.find((r) => r.id === rewardId);
         if (!customer || !reward) return false;
         if (customer.points < reward.cost) {
-          toast(`Puntos insuficientes: faltan ${reward.cost - customer.points}`, 'error');
+          toast(`Not enough points — ${reward.cost - customer.points} short`, 'error');
           return false;
         }
         setState((prev) => ({
@@ -654,14 +655,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             ...prev.pointsLedger,
           ],
         }));
-        toast(`${reward.name} canjeado por ${customer.firstName}`);
+        toast(`${reward.name} redeemed by ${customer.firstName}`);
         return true;
       },
       updateCampaign: (id, patch) => patchIn('campaigns', id, patch),
       addCampaign: (c) => {
         const campaign: Campaign = { ...c, id: uid('cmpg') };
         mutate('campaigns', (prev) => [campaign, ...prev]);
-        toast('Campaña creada');
+        toast('Campaign created');
         return campaign;
       },
 

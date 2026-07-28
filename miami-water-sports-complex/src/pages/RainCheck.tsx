@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CloudLightning, FileDown, Printer, QrCode as QrIcon, UserPlus, Zap } from 'lucide-react';
+import { CloudLightning, FileDown, Printer, QrCode as QrIcon, RefreshCw, UserPlus, Users, Zap } from 'lucide-react';
 import { QrCode } from '@/components/QrCode';
 import { LogoLockup } from '@/components/Logo';
 import { readImageFile } from '@/lib/images';
@@ -27,6 +27,13 @@ export default function RainCheck() {
   const fileRef = useRef<HTMLInputElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const [cloudRows, setCloudRows] = useState<Awaited<ReturnType<typeof cloudListSignups>>>([]);
+  const [syncedAt, setSyncedAt] = useState<string>();
+
+  const refresh = async () => {
+    const rows = await cloudListSignups();
+    setCloudRows(rows);
+    setSyncedAt(new Date().toISOString());
+  };
 
   // Con la nube encendida, la gente que se registra desde su propio teléfono
   // aparece aquí sola. Cinco segundos es suficiente para el ritmo del mostrador.
@@ -35,24 +42,67 @@ export default function RainCheck() {
     let alive = true;
     const pull = async () => {
       const rows = await cloudListSignups();
-      if (alive) setCloudRows(rows);
+      if (!alive) return;
+      setCloudRows(rows);
+      setSyncedAt(new Date().toISOString());
     };
     pull();
-    const timer = window.setInterval(pull, 5000);
+    const timer = window.setInterval(pull, 4000);
     return () => {
       alive = false;
       window.clearInterval(timer);
     };
   }, []);
 
-  const holds = useMemo(
-    () =>
-      state.rainChecks
-        .map((rc) => ({ ...rc, customer: state.customers.find((c) => c.id === rc.customerId) }))
-        .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt)),
-    [state.rainChecks, state.customers],
-  );
+  /**
+   * Una sola lista, venga de donde venga.
+   *
+   * Cuando hay nube, ella manda: es la única que ve los registros hechos desde
+   * el teléfono del cliente. Los locales se conservan y se deduplican por
+   * código de pase, para que nada desaparezca si la red falla a mitad.
+   */
+  const holds = useMemo(() => {
+    const rows = cloudRows.map((r) => ({
+      key: r.pass_code,
+      name: `${r.first_name} ${r.last_name}`.trim(),
+      phone: r.phone,
+      photoUrl: r.photo_url ?? undefined,
+      code: r.pass_code,
+      packageLabel: r.package_label,
+      minutesOwed: r.minutes_owed,
+      issuedAt: r.created_at ?? new Date().toISOString(),
+      status: r.status,
+      localId: undefined as string | undefined,
+    }));
+    const seen = new Set(rows.map((r) => r.code));
+
+    state.rainChecks.forEach((rc) => {
+      if (seen.has(rc.code)) {
+        const row = rows.find((r) => r.code === rc.code);
+        if (row) row.localId = rc.id;
+        return;
+      }
+      const customer = state.customers.find((c) => c.id === rc.customerId);
+      rows.push({
+        key: rc.id,
+        name: customer ? fullName(customer) : '—',
+        phone: customer?.phone ?? '',
+        photoUrl: customer?.photoUrl,
+        code: rc.code,
+        packageLabel: PACKAGE_META[rc.packageType].label,
+        minutesOwed: rc.minutesOwed,
+        issuedAt: rc.issuedAt,
+        status: rc.status,
+        localId: rc.id,
+      });
+    });
+
+    return rows.sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
+  }, [cloudRows, state.rainChecks, state.customers]);
+
   const today = holds.filter((h) => new Date(h.issuedAt).toDateString() === new Date().toDateString());
+  /** El pase vale una temporada completa. */
+  const expiryOf = (issuedAt: string) => new Date(new Date(issuedAt).getTime() + 365 * 864e5).toISOString();
 
   /** URL pública del formulario de auto-registro — es lo que codifica el QR. */
   const registerUrl = `${location.origin}${location.pathname}#/register`;
@@ -122,7 +172,7 @@ export default function RainCheck() {
       >
         <span className={cn('h-2 w-2 rounded-full', isCloudEnabled() ? 'bg-emerald-500' : 'bg-amber-500')} />
         {isCloudEnabled()
-          ? `Connected — ${cloudRows.length} sign-ups synced across every device.`
+          ? `Connected — ${cloudRows.length} sign-ups synced across every device${syncedAt ? ` · updated ${formatTime(syncedAt)}` : ''}.`
           : 'Demo mode — this device only. Add the Supabase keys to sync phones and the front desk.'}
       </div>
 
@@ -206,26 +256,34 @@ export default function RainCheck() {
       {/* La lista — esto es lo que antes era el papel */}
       <Card>
         <CardHeader
-          title={`Waiting list — ${today.length} today`}
-          subtitle="Each pass is valid for 60 days. When they come back, tap Redeem and run their check-in."
+          title={`Waiting list — ${holds.length} ${holds.length === 1 ? 'person' : 'people'}`}
+          subtitle={`${today.length} added today · every pass is valid for one full year · tap Redeem when they come back`}
+          icon={<Users className="h-4 w-4" />}
           action={
-            <Button variant="outline" size="sm" onClick={() => window.print()} className="print:hidden">
-              <Printer className="h-4 w-4" /> Print / PDF
-            </Button>
+            <div className="flex items-center gap-2 print:hidden">
+              {isCloudEnabled() && (
+                <Button variant="outline" size="sm" onClick={refresh}>
+                  <RefreshCw className="h-4 w-4" /> Refresh
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" /> Print / PDF
+              </Button>
+            </div>
           }
         />
         {holds.length ? (
           <ul className="divide-y divide-slate-100">
             {holds.map((h) => (
-              <li key={h.id} className={cn('flex flex-wrap items-center gap-4 px-5 py-4', h.status === 'redeemed' && 'opacity-50')}>
-                <Avatar name={h.customer ? fullName(h.customer) : '—'} src={h.customer?.photoUrl} size="lg" />
+              <li key={h.key} className={cn('flex flex-wrap items-center gap-4 px-5 py-4', h.status === 'redeemed' && 'opacity-50')}>
+                <Avatar name={h.name || '—'} src={h.photoUrl} size="lg" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-base font-bold text-deep-900">{h.customer ? fullName(h.customer) : '—'}</p>
+                  <p className="text-base font-bold text-deep-900">{h.name || '—'}</p>
                   <p className="text-sm text-slate-500">
-                    {h.customer?.phone} · {PACKAGE_META[h.packageType].label} · {h.minutesOwed} min owed
+                    {h.phone} · {h.packageLabel} · {h.minutesOwed} min owed
                   </p>
                   <p className="text-xs text-slate-400">
-                    Issued {formatTime(h.issuedAt)} · valid through {formatDate(h.expiresAt)}
+                    Registered {formatDate(h.issuedAt)} · valid through {formatDate(expiryOf(h.issuedAt))}
                   </p>
                 </div>
                 <span className="font-mono text-lg font-black tracking-wider text-lagoon-700">{h.code}</span>
@@ -233,8 +291,8 @@ export default function RainCheck() {
                   <Button
                     size="lg"
                     onClick={() => {
-                      redeemRainCheck(h.id);
-                      void cloudRedeem(h.code);
+                      if (h.localId) redeemRainCheck(h.localId);
+                      void cloudRedeem(h.code).then(refresh);
                     }}
                     className="print:hidden"
                   >
@@ -277,7 +335,7 @@ export default function RainCheck() {
           <div className="text-right">
             <p className="text-sm font-black uppercase tracking-wide">Lightning hold — waiting list</p>
             <p className="text-xs text-slate-600">
-              {formatDate(new Date().toISOString())} · {holds.length} passes · valid 60 days
+              {formatDate(new Date().toISOString())} · {holds.length} passes · valid for one year
             </p>
           </div>
         </div>
@@ -295,20 +353,20 @@ export default function RainCheck() {
           </thead>
           <tbody>
             {holds.map((h) => (
-              <tr key={h.id} className="border-b border-slate-200">
+              <tr key={h.key} className="border-b border-slate-200">
                 <td className="py-2 font-mono font-bold">{h.code}</td>
-                <td>{h.customer ? fullName(h.customer) : '—'}</td>
-                <td>{h.customer?.phone}</td>
-                <td>{PACKAGE_META[h.packageType].label}</td>
+                <td>{h.name}</td>
+                <td>{h.phone}</td>
+                <td>{h.packageLabel}</td>
                 <td>{h.minutesOwed}</td>
                 <td>{formatDate(h.issuedAt)}</td>
-                <td>{formatDate(h.expiresAt)}</td>
+                <td>{formatDate(expiryOf(h.issuedAt))}</td>
               </tr>
             ))}
           </tbody>
         </table>
         <p className="mt-6 text-[10px] text-slate-500">
-          Miami Watersports Complex · (305) 476-9253 · miamiwatersportscomplex.com — Passes are issued for weather closures and are valid for 60 days from issue.
+          Miami Watersports Complex · (305) 476-9253 · miamiwatersportscomplex.com — Passes are issued for weather closures and are valid for one year from the date of issue.
         </p>
       </div>
     </div>
